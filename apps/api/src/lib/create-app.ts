@@ -1,33 +1,39 @@
-import { authHandler } from "@hono/auth-js";
 import { notFound, onError } from "stoker/middlewares";
 
 import type { AppOpenAPI } from "./types";
 
 import { BASE_PATH } from "./constants";
-import createAuthConfig from "./create-auth-config";
 import createRouter from "./create-router";
+import { optionalKeycloakAuth } from "./keycloak";
 
 export default function createApp() {
   const app = createRouter()
     .use("*", (c, next) => {
-      if (c.req.path.startsWith(BASE_PATH)) {
-        return next();
-      }
-      // SPA redirect to /index.html
-      const requestUrl = new URL(c.req.raw.url);
-      return c.env.ASSETS.fetch(new URL("/index.html", requestUrl.origin));
+      // Add environment variables to context
+      c.env = {
+        ...c.env,
+        DB_HOST: process.env.DB_HOST,
+        DB_PORT: process.env.DB_PORT,
+        DB_USER: process.env.DB_USER,
+        DB_PASSWORD: process.env.DB_PASSWORD,
+        DB_NAME: process.env.DB_NAME,
+        KEYCLOAK_URL: process.env.KEYCLOAK_URL,
+        KEYCLOAK_REALM: process.env.KEYCLOAK_REALM,
+        KEYCLOAK_CLIENT_ID: process.env.KEYCLOAK_CLIENT_ID,
+      };
+      return next();
     })
     .basePath(BASE_PATH) as AppOpenAPI;
 
   app
-    .use(
-      "*",
-      async (c, next) => {
-        c.set("authConfig", createAuthConfig(c.env));
-        return next();
-      },
-    )
-    .use("/auth/*", authHandler())
+    .use("*", (c, next) => {
+      const keycloakConfig = {
+        realm: c.env.KEYCLOAK_REALM || "contrack",
+        authServerUrl: c.env.KEYCLOAK_URL || "http://localhost:8080",
+        clientId: c.env.KEYCLOAK_CLIENT_ID || "contrackapi",
+      };
+      return optionalKeycloakAuth(keycloakConfig)(c, next);
+    })
     .notFound(notFound)
     .onError(onError);
 

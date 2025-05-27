@@ -11,6 +11,7 @@ export default function configureOpenAPI(app: AppOpenAPI) {
     info: {
       version: packageJSON.version,
       title: "Tasks API",
+      description: "A simple tasks API with Keycloak authentication. For protected endpoints (POST, PATCH, DELETE), you need to:\n1. Login at http://localhost:5173\n2. Get your JWT token from browser dev tools\n3. Add 'Authorization: Bearer <token>' header",
     },
   });
 
@@ -20,7 +21,7 @@ export default function configureOpenAPI(app: AppOpenAPI) {
       theme: "kepler",
       layout: "classic",
       defaultHttpClient: {
-        targetKey: "javascript",
+        targetKey: "js",
         clientKey: "fetch",
       },
       spec: {

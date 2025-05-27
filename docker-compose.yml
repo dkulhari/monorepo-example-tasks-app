@@ -1,0 +1,103 @@
+services:
+#   server:
+#     build:
+#       context: ./server
+#       dockerfile: Dockerfile
+#     volumes:
+#       - ./server:/app
+#       - /app/node_modules
+#     ports:
+#       - "3000:3000"
+#     environment:
+#       - NODE_ENV=development
+#     command: bun run --hot src/index.ts
+
+  # PostgreSQL for your application
+  postgres:
+    image: postgres:latest
+    #container_name: postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: myappdb
+      POSTGRES_USER: myappuser
+      POSTGRES_PASSWORD: myapppassword
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  # pgAdmin for PostgreSQL management
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    restart: unless-stopped
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@example.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    ports:
+      - "5050:80"
+    depends_on:
+      - postgres
+
+  # Keycloak for identity management (dev mode, H2 backing)
+  keycloak:
+    image: quay.io/keycloak/keycloak:latest
+    #container_name: keycloak
+    restart: unless-stopped
+    environment:
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+    command:
+      - start-dev
+    ports:
+      - "8080:8080"
+    # no DB dependency since start‑dev uses embedded H2 by default
+
+  # MinIO for S3‑compatible object storage
+  minio:
+    image: minio/minio:latest
+    #container_name: minio
+    restart: unless-stopped
+    environment:
+      MINIO_ROOT_USER: adminuser
+      MINIO_ROOT_PASSWORD: adminuser
+    volumes:
+      - minio_data:/data
+    command:
+      - server
+      - /data
+      - --console-address
+      - ":9001"
+    ports:
+      - "9000:9000"   # S3 API
+      - "9001:9001"   # Web console
+
+ # Permify Policy Decision Point (Open‑Source Authorization Service)
+  permify:
+    image: ghcr.io/permify/permify:latest
+    #container_name: permify
+    restart: unless-stopped
+    depends_on:
+      - postgres
+      - keycloak
+    ports:
+      - "3476:3476"   # HTTP API
+      - "3478:3478"   # gRPC API
+    environment:
+      # Persist authorization data in your Postgres DB
+      PERMIFY_DATABASE_ENGINE: "postgres"                                         # :contentReference[oaicite:0]{index=0}
+      PERMIFY_DATABASE_URI:    "postgres://myappuser:myapppassword@postgres:5432/myappdb"  # :contentReference[oaicite:1]{index=1}
+      PERMIFY_DATABASE_AUTO_MIGRATE: "true"
+
+      # OIDC settings from your Keycloak realm "contrack"
+      PERMIFY_JWT_ISSUER:    "http://keycloak:8080/realms/contrack"
+      PERMIFY_JWT_AUDIENCE:  "contrackapi"
+      PERMIFY_JWT_ALGORITHM: "RS256"
+      PERMIFY_JWKS_URI:      "http://keycloak:8080/realms/contrack/protocol/openid-connect/certs"
+
+volumes:
+  postgres_data:
+  pgadmin_data:
+  minio_data:

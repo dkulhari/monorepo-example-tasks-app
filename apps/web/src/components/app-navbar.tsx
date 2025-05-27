@@ -1,9 +1,11 @@
-import { signOut, useSession } from "@hono/auth-js/react";
 import { Link, useLocation } from "@tanstack/react-router";
+import { useKeycloak } from "@react-keycloak/web";
+import { logout } from "@/web/lib/keycloak";
 
 export default function AppNavbar() {
   const location = useLocation();
-  const session = useSession();
+  const { keycloak, initialized } = useKeycloak();
+  
   return (
     <nav className="container">
       <ul>
@@ -15,22 +17,34 @@ export default function AppNavbar() {
             <Link to="/">Home</Link>
           </li>
         )}
-        {session.data?.user && (
+        {initialized && keycloak.authenticated && (
           <>
-            <li className="user-avatar">
-              <img src={session.data.user.image!} />
-              <p>{session.data.user.name}</p>
+            <li>
+              <p>{keycloak.tokenParsed?.preferred_username || keycloak.tokenParsed?.email}</p>
             </li>
             <li>
               <button
                 type="button"
                 className="outline contrast"
-                onClick={() => signOut()}
+                onClick={() => logout()}
               >
                 Sign Out
               </button>
             </li>
           </>
+        )}
+        {initialized && !keycloak.authenticated && (
+          <li>
+            <button
+              type="button"
+              className="outline"
+              onClick={() => keycloak.login({
+                redirectUri: window.location.origin,
+              })}
+            >
+              Sign In
+            </button>
+          </li>
         )}
       </ul>
     </nav>

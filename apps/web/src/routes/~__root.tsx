@@ -1,15 +1,9 @@
-import type { SessionContext } from "@hono/auth-js/react";
-
-import { createRootRouteWithContext, Outlet } from "@tanstack/react-router";
-import { TanStackRouterDevtools } from "@tanstack/router-devtools";
+import { createRootRoute, Outlet } from "@tanstack/react-router";
+import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
 
 import AppNavbar from "../components/app-navbar";
 
-type Session = Parameters<typeof SessionContext>[0]["value"];
-
-export const Route = createRootRouteWithContext<{
-  session: Session;
-}>()({
+export const Route = createRootRoute({
   component: () => (
     <>
       <AppNavbar />

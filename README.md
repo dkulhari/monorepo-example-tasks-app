@@ -1,6 +1,6 @@
-# Hono + React / Vite + Cloudflare + pnpm workspaces monorepo
+# Hono + React / Vite + PostgreSQL + Keycloak + pnpm workspaces monorepo
 
-A monorepo setup using pnpm workspaces with a Hono API and React / vite client deployed to Cloudflare Workers / Static Assets / D1.
+A monorepo setup using pnpm workspaces with a Hono API and React / Vite client using PostgreSQL database and Keycloak authentication.
 
 Features:
 
@@ -16,15 +16,21 @@ Tech Stack:
 - api
   - hono
   - hono openapi
-  - authjs
+  - keycloak (JWT authentication)
   - stoker
-  - drizzle
+  - drizzle (PostgreSQL)
   - drizzle-zod
 - web
   - react
   - vite
   - react-hook-form
   - tanstack router
+  - keycloak-js
+- infrastructure
+  - PostgreSQL (via Docker)
+  - Keycloak (via Docker)
+  - MinIO (S3-compatible storage)
+  - Permify (authorization service)
 - dev tooling
   - typescript
   - eslint with `@antfu/eslint-config`
@@ -42,25 +48,60 @@ Tour:
 
 ## Local Setup
 
+### Prerequisites
+
+- Node.js 18+
+- pnpm
+- Docker and Docker Compose
+
+### Start Docker services
+
+```sh
+docker-compose up -d
+```
+
+This will start:
+- PostgreSQL on port 5432 (myappdb/myappuser/myapppassword)
+- Keycloak on port 8080 (admin/admin)
+- MinIO on ports 9000/9001 (adminuser/adminuser)
+- Permify on ports 3476/3478
+
 ### Install dependencies
 
 ```sh
 pnpm i
 ```
 
-### Create / Update Cloudflare D1 Database id
+### Configure environment variables
 
 ```sh
-pnpm dlx wrangler create d1 replace-with-your-database-name-here
+cd apps/api
+cp .env.example .env
 ```
 
-Update `database_name` and `database_id` in [apps/api/wrangler.toml](./apps/api/wrangler.toml) with the output from wrangler.
+The default values in `.env` match the Docker services.
 
-### Run DB migrations locally
+### Run database migrations
 
 ```sh
-pnpm run -r db:migrate:local
+cd apps/api
+pnpm db:push
 ```
+
+### Configure Keycloak
+
+1. Access Keycloak at http://localhost:8080
+2. Login with admin/admin
+3. Create a realm named "contrack"
+4. Create a client named "contrackapi" with:
+   - Client Protocol: openid-connect
+   - Client authentication: OFF (makes it a public client)
+   - Authorization: OFF
+   - Standard flow: ON
+   - Direct access grants: ON (optional)
+   - Valid Redirect URIs: http://localhost:5173/*
+   - Valid post logout redirect URIs: http://localhost:5173/*
+   - Web Origins: http://localhost:5173
 
 ### Start Apps
 
@@ -70,20 +111,38 @@ pnpm run dev
 
 Visit [http://localhost:5173](http://localhost:5173)
 
-All requests to `/api` will be proxied to the hono server running on [http://localhost:8787](http://localhost:8787)
+All requests to `/api` will be proxied to the hono server running on [http://localhost:3001](http://localhost:3001)
 
-## Production Setup
+## Architecture Changes
 
-### Run DB migrations on Cloudflare D1
+### From Cloudflare to Docker
+
+This application has been migrated from Cloudflare Workers/D1 to use:
+- **PostgreSQL** instead of D1 for the database
+- **Node.js server** instead of Cloudflare Workers
+- **Keycloak** instead of Auth.js for authentication
+- **Docker Compose** for local development infrastructure
+
+### Authentication Flow
+
+1. User clicks "Sign In" in the web app
+2. Redirected to Keycloak login page
+3. After successful authentication, redirected back with token
+4. Token is automatically included in API requests
+5. API validates token with Keycloak and associates data with user
+
+## Production Deployment
+
+For production deployment, you'll need:
+- A PostgreSQL database
+- A Keycloak instance
+- Node.js hosting for the API
+- Static hosting for the web app
+
+### Build
 
 ```sh
-pnpm run -r db:migrate:remote
-```
-
-### Deploy
-
-```sh
-pnpm run deploy
+pnpm run build
 ```
 
 ## Tasks

@@ -1,13 +1,36 @@
+import type { Context, Next } from "hono";
+
 import createRouter from "@/api/lib/create-router";
+import { keycloakAuth } from "@/api/lib/keycloak";
 
 import * as handlers from "./tasks.handlers";
 import * as routes from "./tasks.routes";
 
-const router = createRouter()
+// Auth middleware
+function authMiddleware(c: Context, next: Next) {
+  const config = {
+    realm: c.env.KEYCLOAK_REALM || "contrack",
+    authServerUrl: c.env.KEYCLOAK_URL || "http://localhost:8080",
+    clientId: c.env.KEYCLOAK_CLIENT_ID || "contrackapi",
+  };
+  return keycloakAuth(config)(c, next);
+}
+
+// Public router
+const publicRouter = createRouter()
   .openapi(routes.list, handlers.list)
-  .openapi(routes.create, handlers.create)
-  .openapi(routes.getOne, handlers.getOne)
-  .openapi(routes.patch, handlers.patch)
-  .openapi(routes.remove, handlers.remove);
+  .openapi(routes.getOne, handlers.getOne);
+
+// Authenticated router (middleware before any .openapi)
+const authRouter = createRouter() as ReturnType<typeof createRouter>;
+authRouter.use("/tasks", authMiddleware);
+authRouter.openapi(routes.create, handlers.create);
+authRouter.openapi(routes.patch, handlers.patch);
+authRouter.openapi(routes.remove, handlers.remove);
+
+// Parent router
+const router = createRouter()
+  .route("/", publicRouter)
+  .route("/", authRouter);
 
 export default router;

@@ -1,4 +1,4 @@
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import * as HttpStatusCodes from "stoker/http-status-codes";
 import * as HttpStatusPhrases from "stoker/http-status-phrases";
 
@@ -7,31 +7,50 @@ import type { AppRouteHandler } from "@/api/lib/types";
 import { createDb } from "@/api/db";
 import { tasks } from "@/api/db/schema";
 import { ZOD_ERROR_CODES, ZOD_ERROR_MESSAGES } from "@/api/lib/constants";
+import { getUser } from "@/api/lib/keycloak";
 
 import type { CreateRoute, GetOneRoute, ListRoute, PatchRoute, RemoveRoute } from "./tasks.routes";
 
 export const list: AppRouteHandler<ListRoute> = async (c) => {
   const db = createDb(c.env);
-  const tasks = await db.query.tasks.findMany({
+  const user = getUser(c);
+  
+  const userTasks = await db.query.tasks.findMany({
+    where(fields, operators) {
+      return user ? operators.eq(fields.userId, user.sub) : undefined;
+    },
     orderBy(fields, operators) {
       return operators.desc(fields.createdAt);
     },
   });
-  return c.json(tasks);
+  return c.json(userTasks);
 };
 
 export const create: AppRouteHandler<CreateRoute> = async (c) => {
   const db = createDb(c.env);
+  const user = getUser(c)!;
   const task = c.req.valid("json");
-  const [inserted] = await db.insert(tasks).values(task).returning();
+  
+  const [inserted] = await db.insert(tasks).values({
+    ...task,
+    userId: user.sub,
+  }).returning();
   return c.json(inserted, HttpStatusCodes.OK);
 };
 
 export const getOne: AppRouteHandler<GetOneRoute> = async (c) => {
   const db = createDb(c.env);
   const { id } = c.req.valid("param");
+  const user = getUser(c);
+  
   const task = await db.query.tasks.findFirst({
     where(fields, operators) {
+      if (user) {
+        return operators.and(
+          operators.eq(fields.id, id),
+          operators.eq(fields.userId, user.sub)
+        );
+      }
       return operators.eq(fields.id, id);
     },
   });
@@ -51,6 +70,7 @@ export const getOne: AppRouteHandler<GetOneRoute> = async (c) => {
 export const patch: AppRouteHandler<PatchRoute> = async (c) => {
   const db = createDb(c.env);
   const { id } = c.req.valid("param");
+  const user = getUser(c)!;
   const updates = c.req.valid("json");
 
   if (Object.keys(updates).length === 0) {
@@ -74,7 +94,10 @@ export const patch: AppRouteHandler<PatchRoute> = async (c) => {
 
   const [task] = await db.update(tasks)
     .set(updates)
-    .where(eq(tasks.id, id))
+    .where(and(
+      eq(tasks.id, id),
+      eq(tasks.userId, user.sub)
+    ))
     .returning();
 
   if (!task) {
@@ -92,10 +115,16 @@ export const patch: AppRouteHandler<PatchRoute> = async (c) => {
 export const remove: AppRouteHandler<RemoveRoute> = async (c) => {
   const db = createDb(c.env);
   const { id } = c.req.valid("param");
-  const result: D1Response = await db.delete(tasks)
-    .where(eq(tasks.id, id));
+  const user = getUser(c)!;
+  
+  const [deleted] = await db.delete(tasks)
+    .where(and(
+      eq(tasks.id, id),
+      eq(tasks.userId, user.sub)
+    ))
+    .returning();
 
-  if (result.meta.changes === 0) {
+  if (!deleted) {
     return c.json(
       {
         message: HttpStatusPhrases.NOT_FOUND,

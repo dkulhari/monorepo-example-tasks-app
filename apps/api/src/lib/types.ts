@@ -1,14 +1,22 @@
 import type { OpenAPIHono, RouteConfig, RouteHandler } from "@hono/zod-openapi";
 
 import type { BASE_PATH } from "./constants";
+import type { KeycloakUser } from "./keycloak";
 
 export type AppEnv = {
   Bindings: {
-    AUTH_SECRET: string;
-    GITHUB_CLIENT_ID: string;
-    GITHUB_CLIENT_SECRET: string;
-    ASSETS: Fetcher;
-    DB: D1Database;
+    DB_HOST?: string;
+    DB_PORT?: string;
+    DB_USER?: string;
+    DB_PASSWORD?: string;
+    DB_NAME?: string;
+    KEYCLOAK_URL?: string;
+    KEYCLOAK_REALM?: string;
+    KEYCLOAK_CLIENT_ID?: string;
+  };
+  Variables: {
+    user?: KeycloakUser;
+    token?: string;
   };
 };
 

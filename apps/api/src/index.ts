@@ -1,12 +1,9 @@
 import { serve } from "@hono/node-server";
-import { config } from "dotenv";
 
 import app from "./app";
+import env from "./env";
 
-// Load environment variables
-config();
-
-const port = Number(process.env.PORT) || 3001;
+const port = env.PORT;
 
 console.log(`Server is running on port ${port}`);
 

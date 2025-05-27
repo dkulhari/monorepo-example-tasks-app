@@ -1,15 +1,17 @@
 import { defineConfig } from "drizzle-kit";
 
+import env from "./src/env";
+
 export default defineConfig({
   out: "./src/db/migrations",
   schema: "./src/db/schema/index.ts",
   dialect: "postgresql",
   dbCredentials: {
-    host: process.env.DB_HOST || "localhost",
-    port: Number(process.env.DB_PORT) || 5432,
-    user: process.env.DB_USER || "myappuser",
-    password: process.env.DB_PASSWORD || "myapppassword",
-    database: process.env.DB_NAME || "myappdb",
+    host: env.DB_HOST,
+    port: Number(env.DB_PORT),
+    user: env.DB_USER,
+    password: env.DB_PASSWORD,
+    database: env.DB_NAME,
     ssl: false,
   },
 });

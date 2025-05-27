@@ -9,20 +9,14 @@ import { optionalKeycloakAuth } from "./keycloak";
 
 export default function createApp() {
   const app = createRouter()
+    .use(createPinoLogger())
     .use("*", (c, next) => {
-      // Add environment variables to context
-      c.env = {
-        ...c.env,
-        DB_HOST: process.env.DB_HOST,
-        DB_PORT: process.env.DB_PORT,
-        DB_USER: process.env.DB_USER,
-        DB_PASSWORD: process.env.DB_PASSWORD,
-        DB_NAME: process.env.DB_NAME,
-        KEYCLOAK_URL: process.env.KEYCLOAK_URL,
-        KEYCLOAK_REALM: process.env.KEYCLOAK_REALM,
-        KEYCLOAK_CLIENT_ID: process.env.KEYCLOAK_CLIENT_ID,
-      };
-      return next();
+      if (c.req.path.startsWith(BASE_PATH)) {
+        return next();
+      }
+      // SPA redirect to /index.html
+      const requestUrl = new URL(c.req.raw.url);
+      return c.env.ASSETS.fetch(new URL("/index.html", requestUrl.origin));
     })
     .basePath(BASE_PATH) as AppOpenAPI;
 
@@ -30,7 +24,6 @@ export default function createApp() {
     .use("*", (c, next) => {
       return optionalKeycloakAuth()(c, next);
     })
-    .use(createPinoLogger())
     .notFound(notFound)
     .onError(onError);
 

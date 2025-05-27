@@ -6,7 +6,7 @@ import type { BASE_PATH } from "./constants";
 import type { KeycloakUser } from "./keycloak";
 
 export type AppBinding = {
-  Env: AppEnv;
+  Bindings: AppEnv;
   Variables: {
     logger: PinoLogger;
     user?: KeycloakUser;

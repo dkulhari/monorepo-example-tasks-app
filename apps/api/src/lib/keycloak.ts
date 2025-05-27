@@ -4,11 +4,19 @@ import { createMiddleware } from "hono/factory";
 import { HTTPException } from "hono/http-exception";
 import * as jose from "jose";
 
+import env from "../env";
+
 export type KeycloakConfig = {
   realm: string;
   authServerUrl: string;
   clientId: string;
   clientSecret?: string;
+};
+
+const config: KeycloakConfig = {
+  realm: env.KEYCLOAK_REALM,
+  authServerUrl: env.KEYCLOAK_URL,
+  clientId: env.KEYCLOAK_CLIENT_ID,
 };
 
 export type KeycloakUser = {
@@ -33,7 +41,7 @@ async function getJWKS(issuer: string): Promise<jose.JWTVerifyGetKey> {
   return jwks;
 }
 
-export function keycloakAuth(config: KeycloakConfig): MiddlewareHandler {
+export function keycloakAuth(): MiddlewareHandler {
   const issuer = `${config.authServerUrl}/realms/${config.realm}`;
 
   return createMiddleware(async (c, next) => {
@@ -78,7 +86,7 @@ export function keycloakAuth(config: KeycloakConfig): MiddlewareHandler {
   });
 }
 
-export function optionalKeycloakAuth(config: KeycloakConfig): MiddlewareHandler {
+export function optionalKeycloakAuth(): MiddlewareHandler {
   const issuer = `${config.authServerUrl}/realms/${config.realm}`;
 
   return createMiddleware(async (c, next) => {

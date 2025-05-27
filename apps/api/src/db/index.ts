@@ -1,26 +1,21 @@
-import { drizzle } from "drizzle-orm/node-postgres";
-import pg from "pg";
+import { drizzle } from 'drizzle-orm/node-postgres'
+import { Pool } from 'pg'
 
-import type { AppEnv } from "../lib/types";
+import env from '../env'
+import * as schema from './schema'
 
-import * as schema from "./schema";
+// Create a new Pool instance
+const pool = new Pool({
+  //connectionString: env.DATABASE_URL,
+  host: env.DB_HOST,
+  port: Number(env.DB_PORT),
+  user: env.DB_USER,
+  password: env.DB_PASSWORD,
+  database: env.DB_NAME,
+})
 
-const { Pool } = pg;
+// Create the Drizzle client
+export const db = drizzle(pool, { schema })
 
-let pool: pg.Pool | null = null;
-
-export function createDb(env: AppEnv["Bindings"]) {
-  if (!pool) {
-    pool = new Pool({
-      host: env.DB_HOST || "localhost",
-      port: Number(env.DB_PORT) || 5432,
-      user: env.DB_USER || "myappuser",
-      password: env.DB_PASSWORD || "myapppassword",
-      database: env.DB_NAME || "myappdb",
-    });
-  }
-  
-  return drizzle(pool, {
-    schema,
-  });
-}
+// Export the pool for direct access if needed
+export { pool }

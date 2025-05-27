@@ -2,6 +2,7 @@ import { notFound, onError } from "stoker/middlewares";
 
 import type { AppOpenAPI } from "./types";
 
+import { createPinoLogger } from "../middleware/pino-logger";
 import { BASE_PATH } from "./constants";
 import createRouter from "./create-router";
 import { optionalKeycloakAuth } from "./keycloak";
@@ -27,13 +28,9 @@ export default function createApp() {
 
   app
     .use("*", (c, next) => {
-      const keycloakConfig = {
-        realm: c.env.KEYCLOAK_REALM || "contrack",
-        authServerUrl: c.env.KEYCLOAK_URL || "http://localhost:8080",
-        clientId: c.env.KEYCLOAK_CLIENT_ID || "contrackapi",
-      };
-      return optionalKeycloakAuth(keycloakConfig)(c, next);
+      return optionalKeycloakAuth()(c, next);
     })
+    .use(createPinoLogger())
     .notFound(notFound)
     .onError(onError);
 

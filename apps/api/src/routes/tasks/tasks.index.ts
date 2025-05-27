@@ -8,12 +8,7 @@ import * as routes from "./tasks.routes";
 
 // Auth middleware
 function authMiddleware(c: Context, next: Next) {
-  const config = {
-    realm: c.env.KEYCLOAK_REALM || "contrack",
-    authServerUrl: c.env.KEYCLOAK_URL || "http://localhost:8080",
-    clientId: c.env.KEYCLOAK_CLIENT_ID || "contrackapi",
-  };
-  return keycloakAuth(config)(c, next);
+  return keycloakAuth()(c, next);
 }
 
 // Public router

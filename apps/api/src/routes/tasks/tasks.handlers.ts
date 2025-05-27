@@ -4,7 +4,7 @@ import * as HttpStatusPhrases from "stoker/http-status-phrases";
 
 import type { AppRouteHandler } from "@/api/lib/types";
 
-import { createDb } from "@/api/db";
+import { db } from "@/api/db";
 import { tasks } from "@/api/db/schema";
 import { ZOD_ERROR_CODES, ZOD_ERROR_MESSAGES } from "@/api/lib/constants";
 import { getUser } from "@/api/lib/keycloak";
@@ -12,9 +12,7 @@ import { getUser } from "@/api/lib/keycloak";
 import type { CreateRoute, GetOneRoute, ListRoute, PatchRoute, RemoveRoute } from "./tasks.routes";
 
 export const list: AppRouteHandler<ListRoute> = async (c) => {
-  const db = createDb(c.env);
   const user = getUser(c);
-  
   const userTasks = await db.query.tasks.findMany({
     where(fields, operators) {
       return user ? operators.eq(fields.userId, user.sub) : undefined;
@@ -27,10 +25,8 @@ export const list: AppRouteHandler<ListRoute> = async (c) => {
 };
 
 export const create: AppRouteHandler<CreateRoute> = async (c) => {
-  const db = createDb(c.env);
   const user = getUser(c)!;
   const task = c.req.valid("json");
-  
   const [inserted] = await db.insert(tasks).values({
     ...task,
     userId: user.sub,
@@ -39,10 +35,9 @@ export const create: AppRouteHandler<CreateRoute> = async (c) => {
 };
 
 export const getOne: AppRouteHandler<GetOneRoute> = async (c) => {
-  const db = createDb(c.env);
   const { id } = c.req.valid("param");
   const user = getUser(c);
-  
+
   const task = await db.query.tasks.findFirst({
     where(fields, operators) {
       if (user) {
@@ -68,7 +63,6 @@ export const getOne: AppRouteHandler<GetOneRoute> = async (c) => {
 };
 
 export const patch: AppRouteHandler<PatchRoute> = async (c) => {
-  const db = createDb(c.env);
   const { id } = c.req.valid("param");
   const user = getUser(c)!;
   const updates = c.req.valid("json");
@@ -113,10 +107,9 @@ export const patch: AppRouteHandler<PatchRoute> = async (c) => {
 };
 
 export const remove: AppRouteHandler<RemoveRoute> = async (c) => {
-  const db = createDb(c.env);
   const { id } = c.req.valid("param");
   const user = getUser(c)!;
-  
+
   const [deleted] = await db.delete(tasks)
     .where(and(
       eq(tasks.id, id),

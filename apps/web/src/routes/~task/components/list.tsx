@@ -2,8 +2,13 @@ import type { selectTasksSchema } from "@tasks-app/api/schema";
 
 import Task from "./task";
 
-export default function TaskList({ tasks }: { tasks: selectTasksSchema[] }) {
+type TaskListProps = {
+  tasks: selectTasksSchema[];
+  tenantId: string;
+};
+
+export default function TaskList({ tasks, tenantId }: TaskListProps) {
   return tasks.map(task => (
-    <Task task={task} key={task.id} />
+    <Task task={task} tenantId={tenantId} key={task.id} />
   ));
 }

@@ -1,6 +1,8 @@
 import { useKeycloak } from "@react-keycloak/web";
 import React, { createContext, useContext, useEffect, useState } from "react";
 
+import apiClient from "./api-client";
+
 type Tenant = {
   id: string;
   name: string;
@@ -24,27 +26,20 @@ export function TenantProvider({ children }: { children: React.ReactNode }) {
   const [tenants, setTenants] = useState<Tenant[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    if (initialized && keycloak.authenticated) {
-      loadUserTenants();
-    }
-  }, [initialized, keycloak.authenticated]);
-
   const loadUserTenants = async () => {
     try {
       // Fetch user's tenants from API
-      const response = await fetch("/api/tenants", {
-        headers: {
-          Authorization: `Bearer ${keycloak.token}`,
-        },
-      });
+      const response = await apiClient.api.tenants.$get();
       const userTenants = await response.json();
-      setTenants(userTenants);
 
-      // Set current tenant from URL or default to first
-      const currentSlug = getCurrentTenantSlug();
-      const tenant = userTenants.find((t: Tenant) => t.slug === currentSlug) || userTenants[0];
-      setCurrentTenant(tenant);
+      if (Array.isArray(userTenants)) {
+        setTenants(userTenants);
+
+        // Set current tenant from URL or default to first
+        const currentSlug = getCurrentTenantSlug();
+        const tenant = userTenants.find((t: Tenant) => t.slug === currentSlug) || userTenants[0];
+        setCurrentTenant(tenant);
+      }
     }
     catch (error) {
       console.error("Failed to load tenants:", error);
@@ -54,12 +49,21 @@ export function TenantProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  useEffect(() => {
+    if (initialized && keycloak.authenticated) {
+      loadUserTenants();
+    }
+    else if (initialized && !keycloak.authenticated) {
+      setLoading(false);
+    }
+  }, [initialized, keycloak.authenticated]);
+
   const switchTenant = (tenantSlug: string) => {
     const tenant = tenants.find(t => t.slug === tenantSlug);
     if (tenant) {
       setCurrentTenant(tenant);
-      // Update URL or localStorage
-      window.location.href = `https://${tenantSlug}.yourdomain.com`;
+      // For now, just update the current tenant without redirecting
+      // In a real app, you might want to update the URL or localStorage
     }
   };
 

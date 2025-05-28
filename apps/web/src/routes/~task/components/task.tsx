@@ -2,7 +2,12 @@ import type { selectTasksSchema } from "@tasks-app/api/schema";
 
 import { Link } from "@tanstack/react-router";
 
-export default function Task({ task }: { task: selectTasksSchema }) {
+type TaskProps = {
+  task: selectTasksSchema;
+  tenantId: string;
+};
+
+export default function Task({ task, tenantId }: TaskProps) {
   return (
     <article>
       <h3
@@ -11,7 +16,13 @@ export default function Task({ task }: { task: selectTasksSchema }) {
         {task.name}
       </h3>
       <div className="buttons">
-        <Link to="/task/$id" params={{ id: task.id.toString() }} role="button" className="outline">
+        <Link
+          to="/task/$id"
+          params={{ id: task.id.toString() }}
+          search={{ tenantId }}
+          role="button"
+          className="outline"
+        >
           View
         </Link>
       </div>

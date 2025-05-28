@@ -1,52 +1,55 @@
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { z } from "zod";
 
 import RoutePending from "@/web/components/route-pending";
 import dateFormatter from "@/web/lib/date-formatter";
 import { createTaskQueryOptions } from "@/web/lib/queries";
 import queryClient from "@/web/lib/query-client";
 
+const searchSchema = z.object({
+  tenantId: z.string(),
+});
+
 export const Route = createFileRoute("/task/$id/")({
-  loader: ({ params }) =>
-    queryClient.ensureQueryData(createTaskQueryOptions(params.id)),
+  validateSearch: searchSchema,
+  loader: ({ params, search }) =>
+    queryClient.ensureQueryData(createTaskQueryOptions(search.tenantId, params.id)),
   component: RouteComponent,
   pendingComponent: RoutePending,
 });
 
 function RouteComponent() {
   const { id } = Route.useParams();
-  const { data } = useSuspenseQuery(createTaskQueryOptions(id));
+  const { tenantId } = Route.useSearch();
+  const { data } = useSuspenseQuery(createTaskQueryOptions(tenantId, id));
 
   return (
-    <article>
-      <h2>{data.name}</h2>
-      <h4>
-        Done:
+    <div>
+      <h1>{data.name}</h1>
+      <p>
+        Status:
         {" "}
-        {data.done ? "✅" : "❌"}
-      </h4>
-      <hr />
-      <small>
-        Updated:
-        {" "}
-        {dateFormatter.format(new Date(data.updatedAt))}
-      </small>
-      <br />
-      <small>
+        {data.done ? "✅ Done" : "⏳ Pending"}
+      </p>
+      <p>
         Created:
         {" "}
         {dateFormatter.format(new Date(data.createdAt))}
-      </small>
+      </p>
+      <p>
+        Updated:
+        {" "}
+        {dateFormatter.format(new Date(data.updatedAt))}
+      </p>
       <div className="buttons">
-        <Link
-          role="button"
-          to="/task/$id/edit"
-          params={{ id }}
-          className="contrast outline"
-        >
+        <Link to="/task/$id/edit" params={{ id }} search={{ tenantId }} role="button">
           Edit
         </Link>
+        <Link to="/" role="button" className="outline">
+          Back
+        </Link>
       </div>
-    </article>
+    </div>
   );
 }

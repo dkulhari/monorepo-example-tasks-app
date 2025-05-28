@@ -1,29 +1,38 @@
 import { createRoute, z } from "@hono/zod-openapi";
 import * as HttpStatusCodes from "stoker/http-status-codes";
 import { jsonContent, jsonContentRequired } from "stoker/openapi/helpers";
-import { createErrorSchema, IdParamsSchema } from "stoker/openapi/schemas";
+import { createErrorSchema } from "stoker/openapi/schemas";
 
-import { insertTasksSchema, patchTasksSchema, selectTasksSchema } from "@/api/db/schema";
-import { notFoundSchema } from "@/api/lib/constants";
+import { insertTasksSchema, patchTasksSchema, selectTasksSchema } from "../../db/schema";
+import { notFoundSchema } from "../../lib/constants";
 
 const tags = ["Tasks"];
 
+// Tenant-aware task routes
 export const list = createRoute({
-  path: "/tasks",
+  path: "/tenants/{tenantId}/tasks",
   method: "get",
+  request: {
+    params: z.object({
+      tenantId: z.string(),
+    }),
+  },
   tags,
   responses: {
     [HttpStatusCodes.OK]: jsonContent(
       z.array(selectTasksSchema),
-      "The list of tasks",
+      "The list of tasks for the tenant",
     ),
   },
 });
 
 export const create = createRoute({
-  path: "/tasks",
+  path: "/tenants/{tenantId}/tasks",
   method: "post",
   request: {
+    params: z.object({
+      tenantId: z.string(),
+    }),
     body: jsonContentRequired(
       insertTasksSchema,
       "The task to create",
@@ -31,7 +40,7 @@ export const create = createRoute({
   },
   tags,
   responses: {
-    [HttpStatusCodes.OK]: jsonContent(
+    [HttpStatusCodes.CREATED]: jsonContent(
       selectTasksSchema,
       "The created task",
     ),
@@ -43,10 +52,13 @@ export const create = createRoute({
 });
 
 export const getOne = createRoute({
-  path: "/tasks/{id}",
+  path: "/tenants/{tenantId}/tasks/{id}",
   method: "get",
   request: {
-    params: IdParamsSchema,
+    params: z.object({
+      tenantId: z.string(),
+      id: z.coerce.number(),
+    }),
   },
   tags,
   responses: {
@@ -59,17 +71,23 @@ export const getOne = createRoute({
       "Task not found",
     ),
     [HttpStatusCodes.UNPROCESSABLE_ENTITY]: jsonContent(
-      createErrorSchema(IdParamsSchema),
-      "Invalid id error",
+      createErrorSchema(z.object({
+        tenantId: z.string(),
+        id: z.coerce.number(),
+      })),
+      "Invalid parameters",
     ),
   },
 });
 
 export const patch = createRoute({
-  path: "/tasks/{id}",
+  path: "/tenants/{tenantId}/tasks/{id}",
   method: "patch",
   request: {
-    params: IdParamsSchema,
+    params: z.object({
+      tenantId: z.string(),
+      id: z.coerce.number(),
+    }),
     body: jsonContentRequired(
       patchTasksSchema,
       "The task updates",
@@ -87,17 +105,23 @@ export const patch = createRoute({
     ),
     [HttpStatusCodes.UNPROCESSABLE_ENTITY]: jsonContent(
       createErrorSchema(patchTasksSchema)
-        .or(createErrorSchema(IdParamsSchema)),
+        .or(createErrorSchema(z.object({
+          tenantId: z.string(),
+          id: z.coerce.number(),
+        }))),
       "The validation error(s)",
     ),
   },
 });
 
 export const remove = createRoute({
-  path: "/tasks/{id}",
+  path: "/tenants/{tenantId}/tasks/{id}",
   method: "delete",
   request: {
-    params: IdParamsSchema,
+    params: z.object({
+      tenantId: z.string(),
+      id: z.coerce.number(),
+    }),
   },
   tags,
   responses: {
@@ -109,8 +133,11 @@ export const remove = createRoute({
       "Task not found",
     ),
     [HttpStatusCodes.UNPROCESSABLE_ENTITY]: jsonContent(
-      createErrorSchema(IdParamsSchema),
-      "Invalid id error",
+      createErrorSchema(z.object({
+        tenantId: z.string(),
+        id: z.coerce.number(),
+      })),
+      "Invalid parameters",
     ),
   },
 });

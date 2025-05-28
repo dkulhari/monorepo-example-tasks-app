@@ -1,8 +1,8 @@
 import type { Context, Next } from "hono";
 
-import createRouter from "@/api/lib/create-router";
-import { keycloakAuth } from "@/api/middleware/keycloak";
-
+import createRouter from "../../lib/create-router";
+import { keycloakAuth } from "../../middleware/keycloak";
+import { tenantMiddleware } from "../../middleware/tenant";
 import * as handlers from "./tasks.handlers";
 import * as routes from "./tasks.routes";
 
@@ -11,21 +11,19 @@ function authMiddleware(c: Context, next: Next) {
   return keycloakAuth()(c, next);
 }
 
-// Public router
-const publicRouter = createRouter()
-  .openapi(routes.list, handlers.list)
-  .openapi(routes.getOne, handlers.getOne);
+// Tenant middleware wrapper
+function tenantAuthMiddleware(c: Context, next: Next) {
+  return tenantMiddleware()(c, next);
+}
 
-// Authenticated router (middleware before any .openapi)
-const authRouter = createRouter() as ReturnType<typeof createRouter>;
-authRouter.use("/tasks", authMiddleware);
-authRouter.openapi(routes.create, handlers.create);
-authRouter.openapi(routes.patch, handlers.patch);
-authRouter.openapi(routes.remove, handlers.remove);
-
-// Parent router
-const router = createRouter()
-  .route("/", publicRouter)
-  .route("/", authRouter);
+// All task routes require authentication and tenant context
+const router = createRouter();
+router.use("/tenants/:tenantId/tasks/*", authMiddleware);
+router.use("/tenants/:tenantId/tasks/*", tenantAuthMiddleware);
+router.openapi(routes.list, handlers.list);
+router.openapi(routes.create, handlers.create);
+router.openapi(routes.getOne, handlers.getOne);
+router.openapi(routes.patch, handlers.patch);
+router.openapi(routes.remove, handlers.remove);
 
 export default router;

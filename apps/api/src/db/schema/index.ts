@@ -1,9 +1,13 @@
 /* eslint-disable ts/no-redeclare */
-import { boolean, pgTable, serial, text, timestamp, varchar } from "drizzle-orm/pg-core";
+import { boolean, pgTable, serial, text, timestamp, uuid, varchar } from "drizzle-orm/pg-core";
 import { z } from "zod";
+
+// Import tenants table for foreign key reference
+import { tenants } from "./tenants";
 
 export const tasks = pgTable("tasks", {
   id: serial("id").primaryKey(),
+  tenantId: uuid("tenant_id").notNull().references(() => tenants.id, { onDelete: "cascade" }),
   userId: varchar("user_id", { length: 255 }).notNull(),
   name: text("name").notNull(),
   done: boolean("done").notNull().default(false),
@@ -14,6 +18,7 @@ export const tasks = pgTable("tasks", {
 // Manual Zod schemas to avoid drizzle-zod compatibility issues
 export const selectTasksSchema = z.object({
   id: z.number(),
+  tenantId: z.string(),
   userId: z.string(),
   name: z.string(),
   done: z.boolean(),
@@ -24,7 +29,7 @@ export type selectTasksSchema = z.infer<typeof selectTasksSchema>;
 
 export const insertTasksSchema = z.object({
   name: z.string().min(1).max(500),
-  done: z.boolean(),
+  done: z.boolean().optional(),
 });
 export type insertTasksSchema = z.infer<typeof insertTasksSchema>;
 

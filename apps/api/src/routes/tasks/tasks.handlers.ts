@@ -2,20 +2,25 @@ import { and, eq } from "drizzle-orm";
 import * as HttpStatusCodes from "stoker/http-status-codes";
 import * as HttpStatusPhrases from "stoker/http-status-phrases";
 
-import type { AppRouteHandler } from "@/api/lib/types";
-
-import { db } from "@/api/db";
-import { tasks } from "@/api/db/schema";
-import { ZOD_ERROR_CODES, ZOD_ERROR_MESSAGES } from "@/api/lib/constants";
-import { getUser } from "@/api/middleware/keycloak";
-
+import type { AppRouteHandler } from "../../lib/types";
 import type { CreateRoute, GetOneRoute, ListRoute, PatchRoute, RemoveRoute } from "./tasks.routes";
 
+import { db } from "../../db";
+import { tasks } from "../../db/schema";
+import { ZOD_ERROR_CODES, ZOD_ERROR_MESSAGES } from "../../lib/constants";
+import { requireUser } from "../../middleware/keycloak";
+import { getTenant } from "../../middleware/tenant";
+
 export const list: AppRouteHandler<ListRoute> = async (c) => {
-  const user = getUser(c);
+  const user = requireUser(c);
+  const tenant = getTenant(c);
+
   const userTasks = await db.query.tasks.findMany({
     where(fields, operators) {
-      return user ? operators.eq(fields.userId, user.sub) : undefined;
+      return operators.and(
+        operators.eq(fields.tenantId, tenant.id),
+        operators.eq(fields.userId, user.sub),
+      );
     },
     orderBy(fields, operators) {
       return operators.desc(fields.createdAt);
@@ -25,28 +30,32 @@ export const list: AppRouteHandler<ListRoute> = async (c) => {
 };
 
 export const create: AppRouteHandler<CreateRoute> = async (c) => {
-  const user = getUser(c)!;
+  const user = requireUser(c);
+  const tenant = getTenant(c);
   const task = c.req.valid("json");
+
   const [inserted] = await db.insert(tasks).values({
     ...task,
+    tenantId: tenant.id,
     userId: user.sub,
+    done: task.done ?? false,
   }).returning();
-  return c.json(inserted, HttpStatusCodes.OK);
+
+  return c.json(inserted, HttpStatusCodes.CREATED);
 };
 
 export const getOne: AppRouteHandler<GetOneRoute> = async (c) => {
   const { id } = c.req.valid("param");
-  const user = getUser(c);
+  const user = requireUser(c);
+  const tenant = getTenant(c);
 
   const task = await db.query.tasks.findFirst({
     where(fields, operators) {
-      if (user) {
-        return operators.and(
-          operators.eq(fields.id, id),
-          operators.eq(fields.userId, user.sub),
-        );
-      }
-      return operators.eq(fields.id, id);
+      return operators.and(
+        operators.eq(fields.id, id),
+        operators.eq(fields.tenantId, tenant.id),
+        operators.eq(fields.userId, user.sub),
+      );
     },
   });
 
@@ -64,7 +73,8 @@ export const getOne: AppRouteHandler<GetOneRoute> = async (c) => {
 
 export const patch: AppRouteHandler<PatchRoute> = async (c) => {
   const { id } = c.req.valid("param");
-  const user = getUser(c)!;
+  const user = requireUser(c);
+  const tenant = getTenant(c);
   const updates = c.req.valid("json");
 
   if (Object.keys(updates).length === 0) {
@@ -87,9 +97,13 @@ export const patch: AppRouteHandler<PatchRoute> = async (c) => {
   }
 
   const [task] = await db.update(tasks)
-    .set(updates)
+    .set({
+      ...updates,
+      updatedAt: new Date(),
+    })
     .where(and(
       eq(tasks.id, id),
+      eq(tasks.tenantId, tenant.id),
       eq(tasks.userId, user.sub),
     ))
     .returning();
@@ -108,11 +122,13 @@ export const patch: AppRouteHandler<PatchRoute> = async (c) => {
 
 export const remove: AppRouteHandler<RemoveRoute> = async (c) => {
   const { id } = c.req.valid("param");
-  const user = getUser(c)!;
+  const user = requireUser(c);
+  const tenant = getTenant(c);
 
   const [deleted] = await db.delete(tasks)
     .where(and(
       eq(tasks.id, id),
+      eq(tasks.tenantId, tenant.id),
       eq(tasks.userId, user.sub),
     ))
     .returning();

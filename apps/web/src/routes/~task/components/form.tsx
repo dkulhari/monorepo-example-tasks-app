@@ -5,7 +5,11 @@ import { useForm } from "react-hook-form";
 
 import { createTask, queryKeys } from "@/web/lib/queries";
 
-export default function TaskForm() {
+type TaskFormProps = {
+  tenantId: string;
+};
+
+export default function TaskForm({ tenantId }: TaskFormProps) {
   const queryClient = useQueryClient();
 
   const {
@@ -23,10 +27,10 @@ export default function TaskForm() {
   });
 
   const createMutation = useMutation({
-    mutationFn: createTask,
+    mutationFn: (task: insertTasksSchema) => createTask(tenantId, task),
     onSuccess: () => {
       reset();
-      queryClient.invalidateQueries(queryKeys.LIST_TASKS);
+      queryClient.invalidateQueries(queryKeys.LIST_TASKS(tenantId));
     },
     onSettled: () => {
       setTimeout(() => {

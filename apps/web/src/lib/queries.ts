@@ -6,23 +6,26 @@ import apiClient from "./api-client";
 import formatApiError from "./format-api-error";
 
 export const queryKeys = {
-  LIST_TASKS: { queryKey: ["list-tasks"] },
-  LIST_TASK: (id: string) => ({ queryKey: [`list-task-${id}`] }),
+  LIST_TASKS: (tenantId: string) => ({ queryKey: ["list-tasks", tenantId] }),
+  LIST_TASK: (tenantId: string, id: string) => ({ queryKey: [`list-task-${id}`, tenantId] }),
 };
 
-export const tasksQueryOptions = queryOptions({
-  ...queryKeys.LIST_TASKS,
+export const tasksQueryOptions = (tenantId: string) => queryOptions({
+  ...queryKeys.LIST_TASKS(tenantId),
   queryFn: async () => {
-    const response = await apiClient.api.tasks.$get();
+    const response = await apiClient.api.tenants[":tenantId"].tasks.$get({
+      param: { tenantId },
+    });
     return response.json();
   },
 });
 
-export const createTaskQueryOptions = (id: string) => queryOptions({
-  ...queryKeys.LIST_TASK(id),
+export const createTaskQueryOptions = (tenantId: string, id: string) => queryOptions({
+  ...queryKeys.LIST_TASK(tenantId, id),
   queryFn: async () => {
-    const response = await apiClient.api.tasks[":id"].$get({
+    const response = await apiClient.api.tenants[":tenantId"].tasks[":id"].$get({
       param: {
+        tenantId,
         // @ts-expect-error allow strings for error messages
         id,
       },
@@ -39,9 +42,10 @@ export const createTaskQueryOptions = (id: string) => queryOptions({
   },
 });
 
-export const createTask = async (task: insertTasksSchema) => {
+export const createTask = async (tenantId: string, task: insertTasksSchema) => {
   await new Promise(resolve => setTimeout(resolve, 1000));
-  const response = await apiClient.api.tasks.$post({
+  const response = await apiClient.api.tenants[":tenantId"].tasks.$post({
+    param: { tenantId },
     json: task,
   });
   const json = await response.json();
@@ -52,9 +56,10 @@ export const createTask = async (task: insertTasksSchema) => {
   return json;
 };
 
-export const deleteTask = async (id: string) => {
-  const response = await apiClient.api.tasks[":id"].$delete({
+export const deleteTask = async (tenantId: string, id: string) => {
+  const response = await apiClient.api.tenants[":tenantId"].tasks[":id"].$delete({
     param: {
+      tenantId,
       // @ts-expect-error allow to show server error
       id,
     },
@@ -69,9 +74,10 @@ export const deleteTask = async (id: string) => {
   }
 };
 
-export const updateTask = async ({ id, task }: { id: string; task: patchTasksSchema }) => {
-  const response = await apiClient.api.tasks[":id"].$patch({
+export const updateTask = async ({ tenantId, id, task }: { tenantId: string; id: string; task: patchTasksSchema }) => {
+  const response = await apiClient.api.tenants[":tenantId"].tasks[":id"].$patch({
     param: {
+      tenantId,
       // @ts-expect-error allow to show server error
       id,
     },

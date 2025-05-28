@@ -1,7 +1,9 @@
-import { createRouter, RouterProvider } from "@tanstack/react-router";
 import { useKeycloak } from "@react-keycloak/web";
+import { createRouter, RouterProvider } from "@tanstack/react-router";
 
 import { routeTree } from "@/web/route-tree.gen";
+
+import { TenantProvider } from "./lib/tenant-context";
 
 const router = createRouter({
   routeTree,
@@ -23,11 +25,15 @@ export default function App() {
 
   if (!keycloak.authenticated) {
     return (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+      <div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100vh" }}>
         <button onClick={() => keycloak.login()}>Login</button>
       </div>
     );
   }
 
-  return <RouterProvider router={router} />;
+  return (
+    <TenantProvider>
+      <RouterProvider router={router} />
+    </TenantProvider>
+  );
 }

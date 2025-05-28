@@ -1,7 +1,7 @@
 import type { Context, Next } from "hono";
 
 import createRouter from "@/api/lib/create-router";
-import { keycloakAuth } from "@/api/lib/keycloak";
+import { keycloakAuth } from "@/api/middleware/keycloak";
 
 import * as handlers from "./tasks.handlers";
 import * as routes from "./tasks.routes";

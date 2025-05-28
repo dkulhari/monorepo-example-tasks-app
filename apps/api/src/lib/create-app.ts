@@ -1,11 +1,12 @@
-import { notFound, onError } from "stoker/middlewares";
+import { notFound } from "stoker/middlewares";
 
 import type { AppOpenAPI } from "./types";
 
+import { errorHandler } from "../middleware/error-handler";
+import { optionalKeycloakAuth } from "../middleware/keycloak";
 import { createPinoLogger } from "../middleware/pino-logger";
 import { BASE_PATH } from "./constants";
 import createRouter from "./create-router";
-import { optionalKeycloakAuth } from "./keycloak";
 
 export default function createApp() {
   const app = createRouter()
@@ -26,7 +27,7 @@ export default function createApp() {
       return optionalKeycloakAuth()(c, next);
     })
     .notFound(notFound)
-    .onError(onError);
+    .onError(errorHandler);
 
   return app;
 }

@@ -7,7 +7,7 @@ import type { AppRouteHandler } from "@/api/lib/types";
 import { db } from "@/api/db";
 import { tasks } from "@/api/db/schema";
 import { ZOD_ERROR_CODES, ZOD_ERROR_MESSAGES } from "@/api/lib/constants";
-import { getUser } from "@/api/lib/keycloak";
+import { getUser } from "@/api/middleware/keycloak";
 
 import type { CreateRoute, GetOneRoute, ListRoute, PatchRoute, RemoveRoute } from "./tasks.routes";
 
@@ -43,7 +43,7 @@ export const getOne: AppRouteHandler<GetOneRoute> = async (c) => {
       if (user) {
         return operators.and(
           operators.eq(fields.id, id),
-          operators.eq(fields.userId, user.sub)
+          operators.eq(fields.userId, user.sub),
         );
       }
       return operators.eq(fields.id, id);
@@ -90,7 +90,7 @@ export const patch: AppRouteHandler<PatchRoute> = async (c) => {
     .set(updates)
     .where(and(
       eq(tasks.id, id),
-      eq(tasks.userId, user.sub)
+      eq(tasks.userId, user.sub),
     ))
     .returning();
 
@@ -113,7 +113,7 @@ export const remove: AppRouteHandler<RemoveRoute> = async (c) => {
   const [deleted] = await db.delete(tasks)
     .where(and(
       eq(tasks.id, id),
-      eq(tasks.userId, user.sub)
+      eq(tasks.userId, user.sub),
     ))
     .returning();
 

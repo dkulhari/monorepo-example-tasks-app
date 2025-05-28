@@ -10,7 +10,15 @@ export function createPinoLogger() {
       {
         level: env.LOG_LEVEL,
       },
-      env.NODE_ENV === "development" ? pretty() : undefined,
+      env.NODE_ENV === "development"
+        ? pretty({
+            colorize: true,
+            translateTime: "HH:MM:ss Z",
+            ignore: "pid,hostname",
+            // Show stack traces in pretty format
+            errorLikeObjectKeys: ["err", "error"],
+          })
+        : undefined,
     ),
     http: {
       reqId: () => crypto.randomUUID(),

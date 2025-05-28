@@ -2,8 +2,8 @@ import type { OpenAPIHono, RouteConfig, RouteHandler } from "@hono/zod-openapi";
 import type { PinoLogger } from "hono-pino";
 
 import type { AppEnv } from "../env";
+import type { KeycloakUser } from "../middleware/keycloak";
 import type { BASE_PATH } from "./constants";
-import type { KeycloakUser } from "./keycloak";
 
 export type AppBinding = {
   Bindings: AppEnv;

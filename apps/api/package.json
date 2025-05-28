@@ -23,7 +23,6 @@
   "dependencies": {
     "@hono/node-server": "^1.13.7",
     "@hono/zod-openapi": "^0.18.3",
-    "@logtape/logtape": "^0.8.0",
     "@scalar/hono-api-reference": "^0.5.164",
     "@tasks-app/eslint-config": "workspace:^",
     "dotenv": "^16.4.7",

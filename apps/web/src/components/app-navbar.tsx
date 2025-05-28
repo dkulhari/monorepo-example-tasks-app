@@ -3,6 +3,7 @@ import { Link, useLocation } from "@tanstack/react-router";
 
 import { logout } from "@/web/lib/keycloak";
 import { useTenant } from "@/web/lib/tenant-context";
+import { Button } from "@/components/ui/button";
 
 import { TenantSelector } from "./tenant-selector";
 
@@ -12,60 +13,53 @@ export default function AppNavbar() {
   const { currentTenant } = useTenant();
 
   return (
-    <nav className="container">
-      <ul>
-        <li><strong>Tasks App</strong></li>
-        {currentTenant && (
-          <li>
-            <small style={{ color: "#666" }}>
-              Tenant:
-              {" "}
-              {currentTenant.name}
-            </small>
-          </li>
-        )}
-      </ul>
-      <ul>
-        {location.pathname !== "/" && (
-          <li>
-            <Link to="/">Home</Link>
-          </li>
-        )}
-        {initialized && keycloak.authenticated && currentTenant && (
-          <li>
+    <nav className="border-b bg-background px-4 py-3">
+      <div className="container mx-auto flex items-center justify-between">
+        <div className="flex items-center space-x-4">
+          <h1 className="text-xl font-bold">Tasks App</h1>
+          {currentTenant && (
+            <span className="text-sm text-muted-foreground">
+              Tenant: {currentTenant.name}
+            </span>
+          )}
+        </div>
+        
+        <div className="flex items-center space-x-4">
+          {location.pathname !== "/" && (
+            <Button variant="ghost" asChild>
+              <Link to="/">Home</Link>
+            </Button>
+          )}
+          
+          {initialized && keycloak.authenticated && currentTenant && (
             <TenantSelector />
-          </li>
-        )}
-        {initialized && keycloak.authenticated && (
-          <>
-            <li>
-              <p>{keycloak.tokenParsed?.preferred_username || keycloak.tokenParsed?.email}</p>
-            </li>
-            <li>
-              <button
-                type="button"
-                className="outline contrast"
+          )}
+          
+          {initialized && keycloak.authenticated && (
+            <>
+              <span className="text-sm text-muted-foreground">
+                {keycloak.tokenParsed?.preferred_username || keycloak.tokenParsed?.email}
+              </span>
+              <Button
+                variant="outline"
                 onClick={() => logout()}
               >
                 Sign Out
-              </button>
-            </li>
-          </>
-        )}
-        {initialized && !keycloak.authenticated && (
-          <li>
-            <button
-              type="button"
-              className="outline"
+              </Button>
+            </>
+          )}
+          
+          {initialized && !keycloak.authenticated && (
+            <Button
               onClick={() => keycloak.login({
                 redirectUri: window.location.origin,
               })}
             >
               Sign In
-            </button>
-          </li>
-        )}
-      </ul>
+            </Button>
+          )}
+        </div>
+      </div>
     </nav>
   );
 }

@@ -7,6 +7,11 @@ import { z } from "zod";
 import RoutePending from "@/web/components/route-pending";
 import { createTaskQueryOptions, deleteTask, queryKeys, updateTask } from "@/web/lib/queries";
 import queryClient from "@/web/lib/query-client";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 
 const searchSchema = z.object({
   tenantId: z.string(),
@@ -31,13 +36,15 @@ function RouteComponent() {
   
   if (!tenantId) {
     return (
-      <div>
-        <h1>Error</h1>
-        <p>Tenant ID is required to edit this task.</p>
-        <Link to="/" role="button" className="outline">
-          Back to Home
-        </Link>
-      </div>
+      <Card>
+        <CardContent className="p-6 text-center">
+          <h1 className="text-xl font-semibold mb-2">Error</h1>
+          <p className="text-muted-foreground mb-4">Tenant ID is required to edit this task.</p>
+          <Button asChild>
+            <Link to="/">Back to Home</Link>
+          </Button>
+        </CardContent>
+      </Card>
     );
   }
   
@@ -85,88 +92,94 @@ function RouteComponent() {
   const error = deleteMutation.error?.message || updateMutation.error?.message;
 
   return (
-    <div>
-      <h1>Edit Task</h1>
-      {error && (
-        <article style={{ whiteSpace: "pre-wrap" }} className="error">
-          {error}
-        </article>
-      )}
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          form.handleSubmit();
-        }}
-      >
-        <form.Field
-          name="name"
-          validators={{
-            onChange: ({ value }) => {
-              if (!value || value.length === 0) {
-                return "Name is required";
-              }
-              if (value.length > 500) {
-                return "Name must be less than 500 characters";
-              }
-              return undefined;
-            },
+    <Card>
+      <CardHeader>
+        <CardTitle>Edit Task</CardTitle>
+      </CardHeader>
+      <CardContent>
+        {error && (
+          <div className="mb-4 p-3 text-sm text-destructive bg-destructive/10 border border-destructive/20 rounded-md">
+            {error}
+          </div>
+        )}
+        
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            form.handleSubmit();
           }}
-          children={(field) => (
-            <label>
-              Name
-              <input
-                name={field.name}
-                value={field.state.value}
-                onBlur={field.handleBlur}
-                onChange={(e) => field.handleChange(e.target.value)}
-                disabled={pending}
-              />
-              {field.state.meta.isTouched && field.state.meta.errors.length > 0 && (
-                <p className="error">{field.state.meta.errors[0]}</p>
-              )}
-            </label>
-          )}
-        />
+          className="space-y-4"
+        >
+          <form.Field
+            name="name"
+            validators={{
+              onChange: ({ value }) => {
+                if (!value || value.length === 0) {
+                  return "Name is required";
+                }
+                if (value.length > 500) {
+                  return "Name must be less than 500 characters";
+                }
+                return undefined;
+              },
+            }}
+            children={(field) => (
+              <div className="space-y-2">
+                <Label htmlFor={field.name}>Task Name</Label>
+                <Input
+                  id={field.name}
+                  name={field.name}
+                  value={field.state.value}
+                  onBlur={field.handleBlur}
+                  onChange={(e) => field.handleChange(e.target.value)}
+                  disabled={pending}
+                />
+                {field.state.meta.isTouched && field.state.meta.errors.length > 0 && (
+                  <p className="text-sm text-destructive">{field.state.meta.errors[0]}</p>
+                )}
+              </div>
+            )}
+          />
 
-        <form.Field
-          name="done"
-          children={(field) => (
-            <label>
-              <input
-                type="checkbox"
-                name={field.name}
-                checked={field.state.value}
-                onBlur={field.handleBlur}
-                onChange={(e) => field.handleChange(e.target.checked)}
-                disabled={pending}
-              />
-              Done
-            </label>
-          )}
-        />
+          <form.Field
+            name="done"
+            children={(field) => (
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id={field.name}
+                  checked={field.state.value}
+                  onCheckedChange={(checked) => field.handleChange(checked)}
+                  disabled={pending}
+                />
+                <Label htmlFor={field.name}>Mark as completed</Label>
+              </div>
+            )}
+          />
 
-        <div className="buttons">
-          <button 
-            type="submit" 
-            disabled={pending}
-          >
-            Update
-          </button>
-          <button
-            type="button"
-            className="outline contrast"
-            disabled={pending}
-            onClick={() => deleteMutation.mutate()}
-          >
-            Delete
-          </button>
-          <Link to="/task/$id" params={{ id }} search={{ tenantId }} role="button" className="outline">
-            Cancel
-          </Link>
-        </div>
-      </form>
-      {pending && <progress />}
-    </div>
+          <div className="flex space-x-2 pt-4">
+            <Button 
+              type="submit" 
+              disabled={pending}
+            >
+              {pending ? "Updating..." : "Update Task"}
+            </Button>
+            <Button
+              type="button"
+              variant="destructive"
+              disabled={pending}
+              onClick={() => deleteMutation.mutate()}
+            >
+              {pending ? "Deleting..." : "Delete"}
+            </Button>
+            <Button variant="outline" asChild>
+              <Link to="/task/$id" params={{ id }} search={{ tenantId }}>
+                Cancel
+              </Link>
+            </Button>
+          </div>
+        </form>
+      </CardContent>
+    </Card>
   );
 }

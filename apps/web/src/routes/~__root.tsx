@@ -7,7 +7,7 @@ export const Route = createRootRoute({
   component: () => (
     <>
       <AppNavbar />
-      <main className="container" style={{ marginTop: "1rem" }}>
+      <main className="container mx-auto px-4 py-6 max-w-4xl">
         <Outlet />
         <TanStackRouterDevtools />
       </main>

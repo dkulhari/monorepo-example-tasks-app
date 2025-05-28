@@ -15,8 +15,12 @@ const searchSchema = z.object({
 
 export const Route = createFileRoute("/task/$id/edit")({
   validateSearch: searchSchema,
-  loader: ({ params, search }) =>
-    queryClient.ensureQueryData(createTaskQueryOptions(search.tenantId, params.id)),
+  loader: ({ params, search }) => {
+    if (!search || !search.tenantId) {
+      return null;
+    }
+    return queryClient.ensureQueryData(createTaskQueryOptions(search.tenantId, params.id));
+  },
   component: RouteComponent,
   pendingComponent: RoutePending,
 });
@@ -25,6 +29,19 @@ function RouteComponent() {
   const { id } = Route.useParams();
   const { tenantId } = Route.useSearch();
   const navigate = useNavigate();
+  
+  if (!tenantId) {
+    return (
+      <div>
+        <h1>Error</h1>
+        <p>Tenant ID is required to edit this task.</p>
+        <Link to="/" role="button" className="outline">
+          Back to Home
+        </Link>
+      </div>
+    );
+  }
+  
   const { data } = useSuspenseQuery(createTaskQueryOptions(tenantId, id));
 
   const {

@@ -1,8 +1,7 @@
-import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "@tanstack/react-form";
 import { useMutation, useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { patchTasksSchema } from "@tasks-app/api/schema";
-import { useForm } from "react-hook-form";
 import { z } from "zod";
 
 import RoutePending from "@/web/components/route-pending";
@@ -44,15 +43,6 @@ function RouteComponent() {
   
   const { data } = useSuspenseQuery(createTaskQueryOptions(tenantId, id));
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors, isDirty },
-  } = useForm<patchTasksSchema>({
-    defaultValues: data,
-    resolver: zodResolver(patchTasksSchema),
-  });
-
   const deleteMutation = useMutation({
     mutationFn: () => deleteTask(tenantId, id),
     onSuccess: async () => {
@@ -74,6 +64,23 @@ function RouteComponent() {
     },
   });
 
+  const form = useForm({
+    defaultValues: {
+      name: data.name,
+      done: data.done,
+    },
+    onSubmit: async ({ value }) => {
+      // Validate with Zod before submitting
+      const result = patchTasksSchema.safeParse(value);
+      if (!result.success) {
+        console.error("Validation errors:", result.error);
+        return;
+      }
+      
+      updateMutation.mutate(result.data);
+    },
+  });
+
   const pending = deleteMutation.isPending || updateMutation.isPending;
   const error = deleteMutation.error?.message || updateMutation.error?.message;
 
@@ -85,20 +92,65 @@ function RouteComponent() {
           {error}
         </article>
       )}
-      <form onSubmit={handleSubmit(data => updateMutation.mutate(data))}>
-        <label>
-          Name
-          <input {...register("name")} disabled={pending} />
-          <p className="error">{errors.name?.message}</p>
-        </label>
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          form.handleSubmit();
+        }}
+      >
+        <form.Field
+          name="name"
+          validators={{
+            onChange: ({ value }) => {
+              if (!value || value.length === 0) {
+                return "Name is required";
+              }
+              if (value.length > 500) {
+                return "Name must be less than 500 characters";
+              }
+              return undefined;
+            },
+          }}
+          children={(field) => (
+            <label>
+              Name
+              <input
+                name={field.name}
+                value={field.state.value}
+                onBlur={field.handleBlur}
+                onChange={(e) => field.handleChange(e.target.value)}
+                disabled={pending}
+              />
+              {field.state.meta.isTouched && field.state.meta.errors.length > 0 && (
+                <p className="error">{field.state.meta.errors[0]}</p>
+              )}
+            </label>
+          )}
+        />
 
-        <label>
-          <input type="checkbox" {...register("done")} disabled={pending} />
-          Done
-        </label>
+        <form.Field
+          name="done"
+          children={(field) => (
+            <label>
+              <input
+                type="checkbox"
+                name={field.name}
+                checked={field.state.value}
+                onBlur={field.handleBlur}
+                onChange={(e) => field.handleChange(e.target.checked)}
+                disabled={pending}
+              />
+              Done
+            </label>
+          )}
+        />
 
         <div className="buttons">
-          <button type="submit" disabled={pending || !isDirty}>
+          <button 
+            type="submit" 
+            disabled={pending}
+          >
             Update
           </button>
           <button

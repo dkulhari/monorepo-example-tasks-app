@@ -13,8 +13,6 @@ export type TenantContext = {
 
 export function tenantMiddleware() {
   return createMiddleware(async (c, next) => {
-    console.log("🔍 Tenant middleware called for:", c.req.url);
-    
     const user = getUser(c);
     if (!user) {
       throw new HTTPException(401, { message: "Authentication required" });
@@ -22,7 +20,6 @@ export function tenantMiddleware() {
 
     // Get tenant from subdomain, path, or header
     const tenantIdentifier = getTenantIdentifier(c);
-    console.log("🔍 Tenant middleware - extracted identifier:", tenantIdentifier);
     
     if (!tenantIdentifier) {
       throw new HTTPException(400, { message: "Tenant not specified" });
@@ -66,30 +63,19 @@ export function tenantMiddleware() {
     // Set tenant context
     c.set("tenant", tenant);
     c.set("userRole", membership.role);
-    
-    console.log("🔍 Tenant middleware - context set:", { 
-      tenantId: tenant.id, 
-      tenantName: tenant.name,
-      userRole: membership.role 
-    });
 
     await next();
   });
 }
 
 function getTenantIdentifier(c: any): string | null {
-  console.log("🔍 getTenantIdentifier - URL:", c.req.url);
-  console.log("🔍 getTenantIdentifier - path:", c.req.path);
-  
   // Option 1: From path parameter (check both tenantId and tenant) - prioritize this for API routes
   const tenantIdFromPath = c.req.param("tenantId");
-  console.log("🔍 tenantId param:", tenantIdFromPath);
   if (tenantIdFromPath) {
     return tenantIdFromPath;
   }
   
   const tenantFromPath = c.req.param("tenant");
-  console.log("🔍 tenant param:", tenantFromPath);
   if (tenantFromPath) {
     return tenantFromPath;
   }
@@ -99,7 +85,6 @@ function getTenantIdentifier(c: any): string | null {
   if (host && !host.includes("localhost") && !host.includes("127.0.0.1")) {
     const subdomain = host.split(".")[0];
     if (subdomain && subdomain !== "www" && subdomain !== "api") {
-      console.log("🔍 Using subdomain:", subdomain);
       return subdomain;
     }
   }
@@ -110,13 +95,11 @@ function getTenantIdentifier(c: any): string | null {
     return tenantFromHeader;
   }
 
-  console.log("🔍 No tenant identifier found");
   return null;
 }
 
 export function getTenant(c: any): typeof tenants.$inferSelect {
   const tenant = c.get("tenant");
-  console.log("🔍 getTenant called - result:", tenant ? { id: tenant.id, name: tenant.name } : "NOT FOUND");
   return tenant;
 }
 

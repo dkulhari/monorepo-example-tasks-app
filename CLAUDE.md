@@ -9,6 +9,7 @@ This is a full-stack TypeScript monorepo using pnpm workspaces with:
 - **Web**: React with Vite and TanStack Router
 - **Authentication**: Keycloak for user management and JWT tokens
 - **Infrastructure**: Docker Compose for local development
+- **Multi-tenancy**: Row-level isolation with tenant context middleware
 
 ## Commands
 
@@ -64,6 +65,12 @@ pnpm --filter api db:push
 
 # Open Drizzle Studio
 pnpm --filter api db:studio
+
+# Seed database with sample data
+pnpm --filter api seed
+
+# Add user to tenant
+pnpm --filter api seed add-user <tenant-slug> <user-id-or-username> [role]
 ```
 
 ### Build & Deploy
@@ -81,8 +88,8 @@ pnpm start
 - `src/routes/` - API endpoints using Hono router
 - `src/db/schema/` - Drizzle ORM schema definitions (PostgreSQL)
 - `src/db/migrations/` - PostgreSQL migrations
+- `src/middleware/` - Authentication, tenant, and error handling middleware
 - `src/lib/` - Core utilities and configurations
-- `src/lib/keycloak.ts` - Keycloak authentication middleware
 - Uses Hono RPC for type-safe client generation
 - OpenAPI documentation at `/docs`
 - Runs on Node.js with Express adapter
@@ -94,13 +101,26 @@ pnpm start
 - `src/route-tree.gen.ts` - Auto-generated route tree
 
 ### Database Schema
-- **tasks** - Main application entity with:
-  - `id` - Serial primary key
+
+#### Multi-tenant Tables
+- **tenants** - Organization/workspace entities:
+  - `id` - UUID primary key
+  - `slug` - Unique identifier for URL routing
+  - `name`, `domain`, `settings`, `plan`, `isActive`
+
+- **tenant_users** - User membership in tenants:
+  - `tenantId` - References tenants table
   - `userId` - Keycloak user ID
-  - `name` - Task name
-  - `done` - Boolean status
-  - `createdAt` - Timestamp
-  - `updatedAt` - Timestamp
+  - `role` - owner, admin, or member
+  
+- **tenant_invitations** - Pending invitations to join tenants
+
+#### Application Tables  
+- **tasks** - Tenant-scoped tasks:
+  - `id` - Serial primary key
+  - `tenantId` - References tenants table
+  - `userId` - Keycloak user ID
+  - `name`, `done`, `createdAt`, `updatedAt`
 
 ### Key Configuration Files
 - `.env` - Environment variables for database and Keycloak
@@ -126,16 +146,60 @@ pnpm start
    - Routes are file-based with `~` prefix
    - Dynamic segments use `$` prefix
 
+## Multi-tenant Architecture
+
+- **Model**: Shared database with row-level isolation by `tenant_id`
+- **API Routes**: Pattern `/api/tenants/{tenantId}/resources`
+- **Tenant Resolution**: Via subdomain, path parameter, or `x-tenant` header
+- **Middleware**: `tenantMiddleware()` validates tenant access and sets context
+- **Authorization**: Keycloak JWT + tenant membership + role-based permissions
+
+### Working with Tenants
+
+1. **Creating Tenant-Aware Resources**:
+   - Add `tenantId` to database schema
+   - Use `getTenant(c)` in route handlers to get current tenant
+   - Filter queries by `tenantId`
+
+2. **Accessing Tenant Context**:
+   ```typescript
+   import { getTenant, getUserRole } from "../middleware/tenant";
+   
+   const tenant = getTenant(c);
+   const userRole = getUserRole(c);
+   ```
+
+3. **Role-Based Access**:
+   ```typescript
+   import { requireRole } from "../middleware/tenant";
+   
+   .use(requireRole(["owner", "admin"]))
+   ```
+
 ## Environment Setup
 
 1. Start Docker services: `docker-compose up -d`
 2. Copy environment variables: `cd apps/api && cp .env.example .env`
 3. Configure Keycloak realm and client as described in README
 
-Environment variables:
-- `DB_*` - PostgreSQL connection settings
-- `KEYCLOAK_*` - Keycloak configuration
-- `PORT` - API server port (default: 3001)
+Key environment variables:
+```bash
+# Database
+DB_HOST=localhost
+DB_PORT=5432
+DB_USER=myappuser
+DB_PASSWORD=myapppassword
+DB_NAME=myappdb
+
+# Keycloak
+KEYCLOAK_URL=http://localhost:8080
+KEYCLOAK_REALM=tasks-app
+KEYCLOAK_CLIENT_ID=tasks-app-api
+KEYCLOAK_CLIENT_SECRET=your-client-secret
+
+# API
+PORT=3001
+```
 
 ## Important Notes
 

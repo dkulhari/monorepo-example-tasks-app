@@ -11,8 +11,8 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@hookform/resolvers": "^3.9.1",
     "@react-keycloak/web": "^3.4.0",
+    "@tanstack/react-form": "^1.12.0",
     "@tanstack/react-query": "^5.62.7",
     "@tanstack/react-router": "^1.120.11",
     "@tasks-app/api": "workspace:^",
@@ -23,7 +23,6 @@
     "keycloak-js": "^26.2.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "react-hook-form": "^7.54.1",
     "zod": "^3.24.1"
   },
   "devDependencies": {

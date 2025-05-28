@@ -1,8 +1,6 @@
 /* eslint-disable ts/no-redeclare */
-import type { z } from "zod";
-
 import { boolean, pgTable, serial, text, timestamp, varchar } from "drizzle-orm/pg-core";
-import { createInsertSchema, createSelectSchema } from "drizzle-zod";
+import { z } from "zod";
 
 export const tasks = pgTable("tasks", {
   id: serial("id").primaryKey(),
@@ -13,23 +11,25 @@ export const tasks = pgTable("tasks", {
   updatedAt: timestamp("updated_at").notNull().defaultNow().$onUpdate(() => new Date()),
 });
 
-export const selectTasksSchema = createSelectSchema(tasks);
+// Manual Zod schemas to avoid drizzle-zod compatibility issues
+export const selectTasksSchema = z.object({
+  id: z.number(),
+  userId: z.string(),
+  name: z.string(),
+  done: z.boolean(),
+  createdAt: z.date(),
+  updatedAt: z.date(),
+});
 export type selectTasksSchema = z.infer<typeof selectTasksSchema>;
 
-export const insertTasksSchema = createInsertSchema(
-  tasks,
-  {
-    name: schema => schema.min(1).max(500),
-  },
-).required({
-  done: true,
-}).omit({
-  id: true,
-  userId: true,
-  createdAt: true,
-  updatedAt: true,
+export const insertTasksSchema = z.object({
+  name: z.string().min(1).max(500),
+  done: z.boolean(),
 });
 export type insertTasksSchema = z.infer<typeof insertTasksSchema>;
 
 export const patchTasksSchema = insertTasksSchema.partial();
 export type patchTasksSchema = z.infer<typeof patchTasksSchema>;
+
+// Export tenant tables
+export * from "./tenants";

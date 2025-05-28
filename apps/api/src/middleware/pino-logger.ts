@@ -9,6 +9,17 @@ export function createPinoLogger() {
     pino: pino(
       {
         level: env.LOG_LEVEL,
+        // Include stack traces for errors
+        serializers: {
+          err: pino.stdSerializers.err,
+          error: pino.stdSerializers.err,
+        },
+        // Format error objects to include stack traces
+        formatters: {
+          level: (label) => {
+            return { level: label };
+          },
+        },
       },
       env.NODE_ENV === "development"
         ? pretty({

@@ -8,6 +8,22 @@ type TaskProps = {
 };
 
 export default function Task({ task, tenantId }: TaskProps) {
+  if (!tenantId) {
+    console.error("Task component: tenantId is undefined!");
+    return (
+      <article>
+        <h3 style={{ textDecoration: task.done ? "line-through" : undefined }}>
+          {task.name}
+        </h3>
+        <div className="buttons">
+          <span role="button" className="outline" style={{ opacity: 0.5 }}>
+            View (No Tenant)
+          </span>
+        </div>
+      </article>
+    );
+  }
+  
   return (
     <article>
       <h3

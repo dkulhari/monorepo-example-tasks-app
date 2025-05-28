@@ -7,7 +7,8 @@
     "build": "pnpm run -r build",
     "test": "pnpm run -r --parallel test",
     "lint": "pnpm run -r --parallel lint",
-    "start": "pnpm run -r --parallel start"
+    "start": "pnpm run -r --parallel start",
+    "seed": "pnpm --filter @tasks-app/api seed"
   },
   "devDependencies": {
     "@tanstack/react-router-devtools": "^1.120.11"

@@ -14,6 +14,9 @@ import { getTenant } from "../../middleware/tenant";
 export const list: AppRouteHandler<ListRoute> = async (c) => {
   const user = requireUser(c);
   const tenant = getTenant(c);
+  
+  console.log("🔍 Task handler - user:", user ? "FOUND" : "NOT FOUND");
+  console.log("🔍 Task handler - tenant:", tenant ? { id: tenant.id, name: tenant.name } : "NOT FOUND");
 
   const userTasks = await db.query.tasks.findMany({
     where(fields, operators) {

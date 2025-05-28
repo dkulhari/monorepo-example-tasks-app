@@ -13,8 +13,14 @@ const searchSchema = z.object({
 
 export const Route = createFileRoute("/task/$id/")({
   validateSearch: searchSchema,
-  loader: ({ params, search }) =>
-    queryClient.ensureQueryData(createTaskQueryOptions(search.tenantId, params.id)),
+  loader: ({ params, search }) => {
+    // If search is undefined or doesn't have tenantId, skip the loader
+    // The component will handle loading the data when search params are available
+    if (!search || !search.tenantId) {
+      return null;
+    }
+    return queryClient.ensureQueryData(createTaskQueryOptions(search.tenantId, params.id));
+  },
   component: RouteComponent,
   pendingComponent: RoutePending,
 });
@@ -22,6 +28,20 @@ export const Route = createFileRoute("/task/$id/")({
 function RouteComponent() {
   const { id } = Route.useParams();
   const { tenantId } = Route.useSearch();
+  
+  // If tenantId is not available, show an error
+  if (!tenantId) {
+    return (
+      <div>
+        <h1>Error</h1>
+        <p>Tenant ID is required to view this task.</p>
+        <Link to="/" role="button" className="outline">
+          Back to Home
+        </Link>
+      </div>
+    );
+  }
+  
   const { data } = useSuspenseQuery(createTaskQueryOptions(tenantId, id));
 
   return (

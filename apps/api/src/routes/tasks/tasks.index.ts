@@ -18,8 +18,10 @@ function tenantAuthMiddleware(c: Context, next: Next) {
 
 // All task routes require authentication and tenant context
 const router = createRouter();
-router.use("/tenants/:tenantId/tasks/*", authMiddleware);
-router.use("/tenants/:tenantId/tasks/*", tenantAuthMiddleware);
+router.use("/tenants/:tenantId/tasks", authMiddleware);
+router.use("/tenants/:tenantId/tasks", tenantAuthMiddleware);
+router.use("/tenants/:tenantId/tasks/:id", authMiddleware);
+router.use("/tenants/:tenantId/tasks/:id", tenantAuthMiddleware);
 router.openapi(routes.list, handlers.list);
 router.openapi(routes.create, handlers.create);
 router.openapi(routes.getOne, handlers.getOne);

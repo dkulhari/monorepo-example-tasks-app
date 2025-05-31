@@ -12,7 +12,7 @@ import { requireUser } from "../../middleware/keycloak";
 import { getTenant } from "../../middleware/tenant";
 
 // GET /tenants/{tenantId}/sites/{siteId}/devices - List devices for a site
-export const list: AppRouteHandler<routes.ListRoute> = async (c) => {
+export const list: AppRouteHandler<routes.ListRoute> = async (c): Promise<any> => {
   requireUser(c);
   const tenant = getTenant(c);
   const { tenantId, siteId } = c.req.valid("param");
@@ -100,7 +100,7 @@ export const create: AppRouteHandler<routes.CreateRoute> = async (c) => {
 };
 
 // GET /tenants/{tenantId}/sites/{siteId}/devices/{id} - Get device details
-export const getOne: AppRouteHandler<routes.GetOneRoute> = async (c) => {
+export const getOne: AppRouteHandler<routes.GetOneRoute> = async (c): Promise<any> => {
   requireUser(c);
   const tenant = getTenant(c);
   const { tenantId, siteId, id } = c.req.valid("param");
@@ -146,7 +146,7 @@ export const getOne: AppRouteHandler<routes.GetOneRoute> = async (c) => {
 };
 
 // PATCH /tenants/{tenantId}/sites/{siteId}/devices/{id} - Update device
-export const patch: AppRouteHandler<routes.PatchRoute> = async (c) => {
+export const patch: AppRouteHandler<routes.PatchRoute> = async (c): Promise<any> => {
   requireUser(c);
   const tenant = getTenant(c);
   const { tenantId, siteId, id } = c.req.valid("param");
@@ -177,7 +177,17 @@ export const patch: AppRouteHandler<routes.PatchRoute> = async (c) => {
 
   if (Object.keys(updates).length === 0) {
     return c.json(
-      { message: "No updates provided" },
+      { 
+        error: { 
+          issues: [{ 
+            code: "invalid_updates", 
+            path: [], 
+            message: "No updates provided" 
+          }], 
+          name: "ValidationError" 
+        }, 
+        success: false 
+      },
       HttpStatusCodes.UNPROCESSABLE_ENTITY,
     );
   }

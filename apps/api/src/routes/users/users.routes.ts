@@ -190,10 +190,6 @@ export const me = createRoute({
       selectUserSchema,
       "The authenticated user's profile",
     ),
-    [HttpStatusCodes.UNAUTHORIZED]: jsonContent(
-      z.object({ message: z.string() }),
-      "Authentication required",
-    ),
   },
 });
 

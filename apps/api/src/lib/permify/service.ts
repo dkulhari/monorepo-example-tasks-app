@@ -35,7 +35,7 @@ export class PermifyService {
   private isInitialized: boolean = false;
 
   constructor(
-    private config: PermifyConfig,
+    config: PermifyConfig,
     cacheOptions: CacheOptions = { ttl: 300, maxSize: 10000 },
   ) {
     this.client = newClient({
@@ -380,14 +380,14 @@ export class PermifyService {
    * Get all permissions for a user on an entity
    */
   async getUserPermissions(
-    userId: string,
+    _userId: string,
     entityType: EntityType,
     entityId: string,
   ): Promise<string[]> {
     this.ensureInitialized();
 
     try {
-      const response = await this.client.permission.expand({
+      await this.client.permission.expand({
         tenantId: "platform",
         metadata: {
           schemaVersion: this.schemaVersion,

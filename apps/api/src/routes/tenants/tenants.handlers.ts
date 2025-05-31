@@ -13,7 +13,7 @@ import { requireUser } from "../../middleware/keycloak";
 import { getTenant, getUserRole } from "../../middleware/tenant";
 
 // GET /tenants - List user's tenants
-export const list: AppRouteHandler<routes.ListRoute> = async (c) => {
+export const list: AppRouteHandler<routes.ListRoute> = async (c): Promise<any> => {
   const user = requireUser(c);
 
   // Get all tenants where user is a member
@@ -44,7 +44,7 @@ export const list: AppRouteHandler<routes.ListRoute> = async (c) => {
 };
 
 // POST /tenants - Create new tenant
-export const create: AppRouteHandler<routes.CreateRoute> = async (c) => {
+export const create: AppRouteHandler<routes.CreateRoute> = async (c): Promise<any> => {
   const user = requireUser(c);
   const { name, slug } = c.req.valid("json");
   const dataSync = getDataSyncService();
@@ -88,13 +88,13 @@ export const create: AppRouteHandler<routes.CreateRoute> = async (c) => {
 };
 
 // GET /tenants/{id} - Get tenant details
-export const getOne: AppRouteHandler<routes.GetOneRoute> = async (c) => {
+export const getOne: AppRouteHandler<routes.GetOneRoute> = async (c): Promise<any> => {
   const tenant = getTenant(c);
   return c.json(tenant, HttpStatusCodes.OK);
 };
 
 // PATCH /tenants/{id} - Update tenant
-export const patch: AppRouteHandler<routes.PatchRoute> = async (c) => {
+export const patch: AppRouteHandler<routes.PatchRoute> = async (c): Promise<any> => {
   const tenant = getTenant(c);
   const userRole = getUserRole(c);
   const updateData = c.req.valid("json");

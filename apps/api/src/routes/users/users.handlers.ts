@@ -10,14 +10,14 @@ import { users } from "../../db/schema";
 import { requireUser } from "../../middleware/keycloak";
 
 // Helper to check if user is system admin
-function isSystemAdmin(user: any) {
-  // Check if user has system_admin user type
-  return user.userType === "system_admin";
-}
+// function isSystemAdmin(user: any) {
+//   // Check if user has system_admin user type
+//   return user.userType === "system_admin";
+// }
 
 // GET /users - List all users (system admin only)
-export const list: AppRouteHandler<routes.ListRoute> = async (c) => {
-  const currentUser = requireUser(c);
+export const list: AppRouteHandler<routes.ListRoute> = async (c): Promise<any> => {
+  requireUser(c);
 
   // TODO: Implement proper system admin check
   // For now, we'll return forbidden
@@ -28,9 +28,9 @@ export const list: AppRouteHandler<routes.ListRoute> = async (c) => {
 };
 
 // POST /users - Create a new user (system admin only)
-export const create: AppRouteHandler<routes.CreateRoute> = async (c) => {
-  const currentUser = requireUser(c);
-  const userData = c.req.valid("json");
+export const create: AppRouteHandler<routes.CreateRoute> = async (c): Promise<any> => {
+  requireUser(c);
+  // const userData = c.req.valid("json");
 
   // TODO: Implement proper system admin check
   // For now, we'll return forbidden
@@ -41,7 +41,7 @@ export const create: AppRouteHandler<routes.CreateRoute> = async (c) => {
 };
 
 // GET /users/{id} - Get user details
-export const getOne: AppRouteHandler<routes.GetOneRoute> = async (c) => {
+export const getOne: AppRouteHandler<routes.GetOneRoute> = async (c): Promise<any> => {
   const currentUser = requireUser(c);
   const { id } = c.req.valid("param");
 
@@ -55,7 +55,7 @@ export const getOne: AppRouteHandler<routes.GetOneRoute> = async (c) => {
   }
 
   const user = await db.query.users.findFirst({
-    where: eq(users.id, id),
+    where: eq(users.id, id) as any,
   });
 
   if (!user) {
@@ -69,7 +69,7 @@ export const getOne: AppRouteHandler<routes.GetOneRoute> = async (c) => {
 };
 
 // PATCH /users/{id} - Update user
-export const patch: AppRouteHandler<routes.PatchRoute> = async (c) => {
+export const patch: AppRouteHandler<routes.PatchRoute> = async (c): Promise<any> => {
   const currentUser = requireUser(c);
   const { id } = c.req.valid("param");
   const updates = c.req.valid("json");
@@ -90,7 +90,17 @@ export const patch: AppRouteHandler<routes.PatchRoute> = async (c) => {
 
   if (Object.keys(allowedUpdates).length === 0) {
     return c.json(
-      { message: "No updates provided" },
+      { 
+        error: { 
+          issues: [{ 
+            code: "invalid_updates", 
+            path: [], 
+            message: "No updates provided" 
+          }], 
+          name: "ValidationError" 
+        }, 
+        success: false 
+      },
       HttpStatusCodes.UNPROCESSABLE_ENTITY,
     );
   }
@@ -101,7 +111,7 @@ export const patch: AppRouteHandler<routes.PatchRoute> = async (c) => {
       ...allowedUpdates,
       updatedAt: new Date(),
     })
-    .where(eq(users.id, id))
+    .where(eq(users.id, id) as any)
     .returning();
 
   if (!updatedUser) {
@@ -115,7 +125,7 @@ export const patch: AppRouteHandler<routes.PatchRoute> = async (c) => {
 };
 
 // DELETE /users/{id} - Delete user (system admin only)
-export const remove: AppRouteHandler<routes.RemoveRoute> = async (c) => {
+export const remove: AppRouteHandler<routes.RemoveRoute> = async (c): Promise<any> => {
   requireUser(c);
 
   // TODO: Implement proper system admin check
@@ -132,7 +142,7 @@ export const me: AppRouteHandler<routes.MeRoute> = async (c) => {
 
   // Get user from database using Keycloak ID
   const user = await db.query.users.findFirst({
-    where: eq(users.keycloakId, currentUser.sub),
+    where: eq(users.keycloakId, currentUser.sub) as any,
   });
 
   if (!user) {

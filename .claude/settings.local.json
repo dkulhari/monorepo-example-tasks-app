@@ -14,7 +14,9 @@
       "Bash(pnpm typecheck:*)",
       "Bash(curl:*)",
       "Bash(pnpm --filter api dev)",
-      "Bash(pnpm --filter api-client build)"
+      "Bash(pnpm --filter api-client build)",
+      "Bash(pnpm --filter api lint)",
+      "Bash(pnpm --filter api lint:fix)"
     ],
     "deny": []
   }

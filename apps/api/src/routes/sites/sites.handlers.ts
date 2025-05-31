@@ -12,7 +12,7 @@ import { requireUser } from "../../middleware/keycloak";
 import { getTenant } from "../../middleware/tenant";
 
 // GET /tenants/{tenantId}/sites - List sites for a tenant
-export const list: AppRouteHandler<routes.ListRoute> = async (c) => {
+export const list: AppRouteHandler<routes.ListRoute> = async (c): Promise<any> => {
   requireUser(c);
   const tenant = getTenant(c);
   const { tenantId } = c.req.valid("param");
@@ -35,7 +35,7 @@ export const list: AppRouteHandler<routes.ListRoute> = async (c) => {
 
 // POST /tenants/{tenantId}/sites - Create a new site
 export const create: AppRouteHandler<routes.CreateRoute> = async (c) => {
-  const user = requireUser(c);
+  requireUser(c);
   const tenant = getTenant(c);
   const { tenantId } = c.req.valid("param");
   const siteData = c.req.valid("json");
@@ -70,7 +70,7 @@ export const create: AppRouteHandler<routes.CreateRoute> = async (c) => {
 };
 
 // GET /tenants/{tenantId}/sites/{id} - Get site details
-export const getOne: AppRouteHandler<routes.GetOneRoute> = async (c) => {
+export const getOne: AppRouteHandler<routes.GetOneRoute> = async (c): Promise<any> => {
   requireUser(c);
   const tenant = getTenant(c);
   const { tenantId, id } = c.req.valid("param");
@@ -101,7 +101,7 @@ export const getOne: AppRouteHandler<routes.GetOneRoute> = async (c) => {
 };
 
 // PATCH /tenants/{tenantId}/sites/{id} - Update site
-export const patch: AppRouteHandler<routes.PatchRoute> = async (c) => {
+export const patch: AppRouteHandler<routes.PatchRoute> = async (c): Promise<any> => {
   requireUser(c);
   const tenant = getTenant(c);
   const { tenantId, id } = c.req.valid("param");
@@ -117,7 +117,17 @@ export const patch: AppRouteHandler<routes.PatchRoute> = async (c) => {
 
   if (Object.keys(updates).length === 0) {
     return c.json(
-      { message: "No updates provided" },
+      { 
+        error: { 
+          issues: [{ 
+            code: "invalid_updates", 
+            path: [], 
+            message: "No updates provided" 
+          }], 
+          name: "ValidationError" 
+        }, 
+        success: false 
+      },
       HttpStatusCodes.UNPROCESSABLE_ENTITY,
     );
   }
@@ -160,7 +170,7 @@ export const remove: AppRouteHandler<routes.RemoveRoute> = async (c) => {
     );
   }
 
-  const result = await db
+  await db
     .delete(sites)
     .where(
       and(

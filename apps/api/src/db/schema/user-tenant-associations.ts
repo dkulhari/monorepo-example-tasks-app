@@ -1,5 +1,5 @@
 import { relations } from "drizzle-orm";
-import { index, pgEnum, pgTable,timestamp, unique, uuid} from "drizzle-orm/pg-core";
+import { index, pgEnum, pgTable, timestamp, unique, uuid } from "drizzle-orm/pg-core";
 
 import { id, roleEnum, timestamps, userTenantStatusEnum } from "./common";
 import { tenants } from "./tenants-new";
@@ -21,7 +21,7 @@ export const userTenantAssociations = pgTable("user_tenant_associations", {
   invitedBy: uuid("invited_by").references(() => users.id),
   lastActiveAt: timestamp("last_active_at", { withTimezone: true }),
   ...timestamps,
-}, (table) => ({
+}, table => ({
   // Composite unique constraint
   userTenantUnique: unique("user_tenant_unique").on(table.userId, table.tenantId),
   // Indexes for performance

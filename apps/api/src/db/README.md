@@ -7,39 +7,46 @@ This directory contains the complete database setup for a multi-tenant platform 
 ### Core Tables
 
 1. **tenants** - Organizations/workspaces
+
    - Supports different tenant types (enterprise, standard, trial, demo)
    - Status tracking (active, suspended, inactive)
    - Keycloak group integration
    - Flexible JSON settings for features and branding
 
 2. **users** - Platform users
+
    - Keycloak ID integration
    - User types (system_admin, regular, service_account, guest)
    - Self-referential created_by for audit trail
    - Extensible metadata for preferences and profile data
 
 3. **user_tenant_associations** - Many-to-many user-tenant relationships
+
    - Role-based access (owner, admin, member, viewer)
    - Status tracking (active, invited, suspended)
    - Invitation workflow support
    - Activity tracking with last_active_at
 
 4. **sites** - Physical or logical locations within tenants
+
    - Hierarchical structure under tenants
    - Geographic data with coordinates
    - Timezone support
    - Flexible metadata for operating hours and contact info
 
 5. **user_site_assignments** - User access to specific sites
+
    - Many-to-many relationship
    - Tracks who assigned access
 
 6. **devices** - Equipment/assets at sites
+
    - Unique serial numbers
    - Status tracking
    - Rich metadata for specs and configuration
 
 7. **audit_logs** - Comprehensive activity logging
+
    - Tracks all system actions
    - Before/after change data
    - IP and user agent tracking
@@ -98,6 +105,7 @@ npm run seed:multi-tenant
 ```
 
 This creates:
+
 - 1 System admin user
 - 3 Sample tenants (Enterprise, Standard, Trial)
 - 5 Users including cross-tenant users
@@ -135,6 +143,7 @@ npm run db:studio
 ## Cross-Tenant Users
 
 The schema supports users belonging to multiple tenants with different roles:
+
 - A user can be an owner in one tenant and a member in another
 - Each association is tracked separately with its own status
 - Site assignments are tenant-scoped for security

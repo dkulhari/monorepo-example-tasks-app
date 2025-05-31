@@ -5,6 +5,7 @@ This guide explains how to add a new resource with full CRUD operations to our H
 ## Overview
 
 Our API follows a structured pattern for organizing routes:
+
 - **Database Schema**: Define the data structure
 - **Route Definitions**: Define OpenAPI specifications
 - **Handlers**: Implement the business logic
@@ -19,7 +20,7 @@ First, create the database schema in `src/db/schema/`:
 
 ```typescript
 // src/db/schema/users.ts
-import { pgTable, serial, text, timestamp, boolean } from "drizzle-orm/pg-core";
+import { boolean, pgTable, serial, text, timestamp } from "drizzle-orm/pg-core";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 
 export const users = pgTable("users", {
@@ -40,9 +41,9 @@ export const patchUserSchema = insertUserSchema.partial();
 Don't forget to export from the main schema file:
 
 ```typescript
+export * from "./tasks"; // existing
 // src/db/schema/index.ts
 export * from "./users";
-export * from "./tasks"; // existing
 ```
 
 ### 2. Create Route Definitions
@@ -154,10 +155,11 @@ Create the business logic in `src/routes/users/users.handlers.ts`:
 
 ```typescript
 import { eq } from "drizzle-orm";
-import * as HttpStatusCodes from "stoker/http-status-codes";
 import { HTTPException } from "hono/http-exception";
+import * as HttpStatusCodes from "stoker/http-status-codes";
 
 import type { AppRouteHandler } from "@/api/lib/types";
+
 import { db } from "@/api/db";
 import { users } from "@/api/db/schema";
 import { requireUser } from "@/api/middleware/keycloak";
@@ -168,7 +170,7 @@ import * as routes from "./users.routes";
 export const list: AppRouteHandler<typeof routes.list> = async (c) => {
   // Optional: Check authentication if needed
   // const currentUser = requireUser(c);
-  
+
   const allUsers = await db.select().from(users);
   return c.json(allUsers, HttpStatusCodes.OK);
 };
@@ -177,9 +179,9 @@ export const list: AppRouteHandler<typeof routes.list> = async (c) => {
 export const create: AppRouteHandler<typeof routes.create> = async (c) => {
   // Require authentication for creating users
   const currentUser = requireUser(c);
-  
+
   const userData = c.req.valid("json");
-  
+
   const [newUser] = await db
     .insert(users)
     .values({
@@ -195,7 +197,7 @@ export const create: AppRouteHandler<typeof routes.create> = async (c) => {
 // GET /users/{id}
 export const getOne: AppRouteHandler<typeof routes.getOne> = async (c) => {
   const { id } = c.req.valid("param");
-  
+
   const user = await db
     .select()
     .from(users)
@@ -270,7 +272,7 @@ const router = createRouter()
   // Public routes (no auth required)
   .openapi(routes.list, handlers.list)
   .openapi(routes.getOne, handlers.getOne)
-  
+
   // Protected routes (auth required)
   .use("*", keycloakAuth()) // Apply auth to all routes below
   .openapi(routes.create, handlers.create)
@@ -321,14 +323,18 @@ pnpm db:migrate
 ## Authentication Patterns
 
 ### Public Routes
+
 For routes that don't require authentication:
+
 ```typescript
 // No auth middleware needed
 .openapi(routes.list, handlers.list)
 ```
 
 ### Protected Routes
+
 For routes that require authentication:
+
 ```typescript
 // Apply auth middleware
 .use("*", keycloakAuth())
@@ -336,7 +342,9 @@ For routes that require authentication:
 ```
 
 ### Optional Authentication
+
 For routes that work with or without auth:
+
 ```typescript
 // Use optionalKeycloakAuth in create-app.ts (already configured)
 // Then in handlers, check: const user = getUser(c);
@@ -345,19 +353,22 @@ For routes that work with or without auth:
 ## Testing Your Routes
 
 1. **Start the development server**:
+
    ```bash
    pnpm dev
    ```
 
 2. **View API documentation**:
+
    - Open http://localhost:3001/api/reference
    - Your new routes should appear in the documentation
 
 3. **Test with curl**:
+
    ```bash
    # List users
    curl http://localhost:3001/api/users
-   
+
    # Create user (requires auth token)
    curl -X POST http://localhost:3001/api/users \
      -H "Content-Type: application/json" \
@@ -397,9 +408,10 @@ src/routes/users/
 ## Next Steps
 
 After adding your routes:
+
 1. Write unit tests in `users.test.ts`
 2. Update the frontend API client to use the new endpoints
 3. Add any necessary database indexes for performance
 4. Consider adding rate limiting for sensitive operations
 
-Happy coding! 🚀 
+Happy coding! 🚀

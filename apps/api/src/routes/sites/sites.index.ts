@@ -1,5 +1,4 @@
 import createRouter from "../../lib/create-router";
-
 import * as handlers from "./sites.handlers";
 import * as routes from "./sites.routes";
 

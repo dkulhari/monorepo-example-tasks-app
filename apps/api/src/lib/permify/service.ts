@@ -4,8 +4,6 @@ import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
-const { newClient, newAccessTokenInterceptor } = grpc;
-
 import type {
   ActionForEntity,
   BatchCheckRequest,
@@ -24,6 +22,8 @@ import {
   PermissionDeniedError,
   SchemaNotFoundError,
 } from "./types";
+
+const { newClient, newAccessTokenInterceptor } = grpc;
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);

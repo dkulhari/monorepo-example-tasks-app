@@ -1,8 +1,9 @@
-import { pgTable, uuid, timestamp, primaryKey, index } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
-import { users } from "./users";
+import { index, pgTable, primaryKey, timestamp, uuid } from "drizzle-orm/pg-core";
+
 import { sites } from "./sites";
 import { tenants } from "./tenants-new";
+import { users } from "./users";
 
 // User-Site Assignments table (many-to-many)
 export const userSiteAssignments = pgTable("user_site_assignments", {
@@ -11,7 +12,7 @@ export const userSiteAssignments = pgTable("user_site_assignments", {
   tenantId: uuid("tenant_id").notNull().references(() => tenants.id, { onDelete: "cascade" }),
   assignedBy: uuid("assigned_by").notNull().references(() => users.id),
   assignedAt: timestamp("assigned_at", { withTimezone: true }).notNull().defaultNow(),
-}, (table) => ({
+}, table => ({
   // Composite primary key
   pk: primaryKey({ columns: [table.userId, table.siteId] }),
   // Indexes for performance

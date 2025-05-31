@@ -1,6 +1,7 @@
-import { pgTable, uuid, varchar, pgEnum, json, index, unique } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
-import { id, timestamps, deviceStatusEnum } from "./common";
+import { index, json, pgEnum, pgTable, unique, uuid, varchar } from "drizzle-orm/pg-core";
+
+import { deviceStatusEnum, id, timestamps } from "./common";
 import { sites } from "./sites";
 
 // Create enum
@@ -43,7 +44,7 @@ export const devices = pgTable("devices", {
   }>().default({}),
   status: deviceStatusEnumPg("status").notNull().default("active"),
   ...timestamps,
-}, (table) => ({
+}, table => ({
   // Unique constraint on serial number
   serialNumberUnique: unique("devices_serial_number_unique").on(table.serialNumber),
   // Indexes for performance

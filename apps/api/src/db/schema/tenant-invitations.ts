@@ -1,10 +1,10 @@
-import { pgTable, uuid, varchar, timestamp, boolean, unique, index } from "drizzle-orm/pg-core";
+import { boolean, index, pgTable, timestamp, unique, uuid, varchar } from "drizzle-orm/pg-core";
+
 import { id, timestamps } from "./common";
 import { tenants } from "./tenants-new";
-import { users } from "./users";
-
 // Reuse role enum
 import { roleEnumPg } from "./user-tenant-associations";
+import { users } from "./users";
 
 // Tenant Invitations table
 export const tenantInvitations = pgTable("tenant_invitations", {
@@ -17,7 +17,7 @@ export const tenantInvitations = pgTable("tenant_invitations", {
   createdBy: uuid("created_by").notNull().references(() => users.id),
   accepted: boolean("accepted").notNull().default(false),
   ...timestamps,
-}, (table) => ({
+}, table => ({
   // Unique constraint - one active invitation per email per tenant
   emailTenantUnique: unique("invitations_email_tenant_unique").on(table.email, table.tenantId),
   // Indexes for performance

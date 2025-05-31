@@ -94,11 +94,13 @@ pnpm seed help
 ### Tenants
 
 1. **Acme Corporation** (`acme-corp`)
+
    - Plan: Enterprise
    - Domain: acme.example.com
    - Features: Advanced analytics, custom branding
 
 2. **Tech Startup Inc** (`tech-startup`)
+
    - Plan: Pro
    - Features: Team collaboration
 

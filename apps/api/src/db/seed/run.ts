@@ -1,6 +1,6 @@
 #!/usr/bin/env tsx
 
-import { seedDatabase, addUserToTenant, getKeycloakUserId } from "./index";
+import { addUserToTenant, getKeycloakUserId, seedDatabase } from "./index";
 
 async function main() {
   const args = process.argv.slice(2);
@@ -10,27 +10,28 @@ async function main() {
     case "seed":
       await seedDatabase();
       break;
-      
+
     case "add-user":
       const tenantSlug = args[1];
       const userIdOrUsername = args[2];
       const role = (args[3] as "owner" | "admin" | "member") || "member";
-      
+
       if (!tenantSlug || !userIdOrUsername) {
         console.error("Usage: pnpm seed add-user <tenant-slug> <user-id-or-username> [role]");
         console.error("Example: pnpm seed add-user acme-corp testuser admin");
         process.exit(1);
       }
-      
+
       try {
         const userId = getKeycloakUserId(userIdOrUsername);
         await addUserToTenant(tenantSlug, userId, role);
-      } catch (error) {
+      }
+      catch (error) {
         console.error("❌ Error adding user to tenant:", error);
         process.exit(1);
       }
       break;
-      
+
     case "help":
     default:
       console.log("🌱 Database Seeding CLI");
@@ -51,4 +52,4 @@ async function main() {
 main().catch((error) => {
   console.error("❌ CLI Error:", error);
   process.exit(1);
-}); 
+});

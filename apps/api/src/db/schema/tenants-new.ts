@@ -33,13 +33,12 @@ export const tenants = pgTable("tenants", {
     };
   }>().default({}),
   ...timestamps,
-}, (table) => ({
+}, table => ({
   // Indexes for performance
   slugIdx: index("tenants_slug_idx").on(table.slug),
   statusIdx: index("tenants_status_idx").on(table.status),
   keycloakGroupIdx: index("tenants_keycloak_group_idx").on(table.keycloakGroupId),
 }));
-
 
 // Type exports
 export type Tenant = typeof tenants.$inferSelect;

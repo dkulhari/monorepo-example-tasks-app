@@ -20,23 +20,24 @@ export function tenantMiddleware() {
 
     // Get tenant from subdomain, path, or header
     const tenantIdentifier = getTenantIdentifier(c);
-    
+
     if (!tenantIdentifier) {
       throw new HTTPException(400, { message: "Tenant not specified" });
     }
 
     // Find tenant by slug or ID
     let tenant;
-    
+
     // Check if it's a UUID (tenant ID) or a slug
     const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(tenantIdentifier);
-    
+
     if (isUUID) {
       // Look up by tenant ID
       tenant = await db.query.tenants.findFirst({
         where: eq(tenants.id, tenantIdentifier),
       });
-    } else {
+    }
+    else {
       // Look up by tenant slug
       tenant = await db.query.tenants.findFirst({
         where: eq(tenants.slug, tenantIdentifier),
@@ -74,7 +75,7 @@ function getTenantIdentifier(c: any): string | null {
   if (tenantIdFromPath) {
     return tenantIdFromPath;
   }
-  
+
   const tenantFromPath = c.req.param("tenant");
   if (tenantFromPath) {
     return tenantFromPath;

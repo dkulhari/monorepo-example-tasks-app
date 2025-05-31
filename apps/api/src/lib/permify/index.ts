@@ -1,21 +1,21 @@
-export { PermifyService, getPermifyService } from './service';
-export * from './types';
+export { getPermifyService, PermifyService } from "./service";
+export * from "./types";
 
 // Re-export commonly used types for convenience
 export type {
+  BatchCheckRequest,
+  BatchCheckResponse,
+  EntityType,
   PermifyConfig,
   PermissionCheckRequest,
   PermissionCheckResponse,
   RelationshipTuple,
-  BatchCheckRequest,
-  BatchCheckResponse,
-  EntityType,
-  UserType,
   UserStatus,
-} from './types';
+  UserType,
+} from "./types";
 
 export {
   PermifyError,
   PermissionDeniedError,
   SchemaNotFoundError,
-} from './types';
+} from "./types";

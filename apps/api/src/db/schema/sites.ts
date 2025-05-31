@@ -1,6 +1,7 @@
-import { pgTable, uuid, varchar, text, pgEnum, json, index } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
-import { id, timestamps, siteStatusEnum } from "./common";
+import { index, json, pgEnum, pgTable, text, uuid, varchar } from "drizzle-orm/pg-core";
+
+import { id, siteStatusEnum, timestamps } from "./common";
 import { tenants } from "./tenants-new";
 
 // Create enum
@@ -38,7 +39,7 @@ export const sites = pgTable("sites", {
   }>().default({}),
   status: siteStatusEnumPg("status").notNull().default("active"),
   ...timestamps,
-}, (table) => ({
+}, table => ({
   // Indexes for performance
   tenantIdIdx: index("sites_tenant_id_idx").on(table.tenantId),
   statusIdx: index("sites_status_idx").on(table.status),

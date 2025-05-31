@@ -36,21 +36,21 @@ Multi-tenant organization management with role-based access control.
 
 ### Core Tenant Operations
 
-| Method | Endpoint | Summary | Access Level |
-|--------|----------|---------|--------------|
-| `GET` | `/api/tenants` | List user's tenants | Any authenticated user |
-| `POST` | `/api/tenants` | Create a new tenant | Any authenticated user |
-| `GET` | `/api/tenants/{id}` | Get tenant details | Tenant members |
-| `PATCH` | `/api/tenants/{id}` | Update tenant | Owners & Admins |
-| `DELETE` | `/api/tenants/{id}` | Delete tenant | Owners only |
+| Method   | Endpoint            | Summary             | Access Level           |
+| -------- | ------------------- | ------------------- | ---------------------- |
+| `GET`    | `/api/tenants`      | List user's tenants | Any authenticated user |
+| `POST`   | `/api/tenants`      | Create a new tenant | Any authenticated user |
+| `GET`    | `/api/tenants/{id}` | Get tenant details  | Tenant members         |
+| `PATCH`  | `/api/tenants/{id}` | Update tenant       | Owners & Admins        |
+| `DELETE` | `/api/tenants/{id}` | Delete tenant       | Owners only            |
 
 ### Tenant User Management
 
-| Method | Endpoint | Summary | Access Level |
-|--------|----------|---------|--------------|
-| `GET` | `/api/tenants/{id}/users` | List tenant users | Owners & Admins |
-| `POST` | `/api/tenants/{id}/invite` | Invite user to tenant | Owners & Admins |
-| `PATCH` | `/api/tenants/{tenantId}/users/{userId}` | Update user role | Owners & Admins |
+| Method   | Endpoint                                 | Summary                 | Access Level    |
+| -------- | ---------------------------------------- | ----------------------- | --------------- |
+| `GET`    | `/api/tenants/{id}/users`                | List tenant users       | Owners & Admins |
+| `POST`   | `/api/tenants/{id}/invite`               | Invite user to tenant   | Owners & Admins |
+| `PATCH`  | `/api/tenants/{tenantId}/users/{userId}` | Update user role        | Owners & Admins |
 | `DELETE` | `/api/tenants/{tenantId}/users/{userId}` | Remove user from tenant | Owners & Admins |
 
 #### Tenant Roles
@@ -81,14 +81,14 @@ System-wide user management with role-based access control.
 
 ### User Operations
 
-| Method | Endpoint | Summary | Access Level |
-|--------|----------|---------|--------------|
-| `GET` | `/api/users` | List all users | System admins only |
-| `POST` | `/api/users` | Create a new user | System admins only |
-| `GET` | `/api/users/{id}` | Get user details | Self or system admins |
-| `PATCH` | `/api/users/{id}` | Update user profile | Self or system admins |
-| `DELETE` | `/api/users/{id}` | Delete user | System admins only |
-| `GET` | `/api/users/me` | Get current user profile | Any authenticated user |
+| Method   | Endpoint          | Summary                  | Access Level           |
+| -------- | ----------------- | ------------------------ | ---------------------- |
+| `GET`    | `/api/users`      | List all users           | System admins only     |
+| `POST`   | `/api/users`      | Create a new user        | System admins only     |
+| `GET`    | `/api/users/{id}` | Get user details         | Self or system admins  |
+| `PATCH`  | `/api/users/{id}` | Update user profile      | Self or system admins  |
+| `DELETE` | `/api/users/{id}` | Delete user              | System admins only     |
+| `GET`    | `/api/users/me`   | Get current user profile | Any authenticated user |
 
 #### User Types
 
@@ -105,13 +105,13 @@ Physical location management within tenants.
 
 ### Site Operations
 
-| Method | Endpoint | Summary | Access Level |
-|--------|----------|---------|--------------|
-| `GET` | `/api/tenants/{tenantId}/sites` | List tenant sites | Tenant members |
-| `POST` | `/api/tenants/{tenantId}/sites` | Create a new site | Owners & Admins |
-| `GET` | `/api/tenants/{tenantId}/sites/{id}` | Get site details | Tenant members |
-| `PATCH` | `/api/tenants/{tenantId}/sites/{id}` | Update site information | Owners & Admins |
-| `DELETE` | `/api/tenants/{tenantId}/sites/{id}` | Delete site | Owners & Admins |
+| Method   | Endpoint                             | Summary                 | Access Level    |
+| -------- | ------------------------------------ | ----------------------- | --------------- |
+| `GET`    | `/api/tenants/{tenantId}/sites`      | List tenant sites       | Tenant members  |
+| `POST`   | `/api/tenants/{tenantId}/sites`      | Create a new site       | Owners & Admins |
+| `GET`    | `/api/tenants/{tenantId}/sites/{id}` | Get site details        | Tenant members  |
+| `PATCH`  | `/api/tenants/{tenantId}/sites/{id}` | Update site information | Owners & Admins |
+| `DELETE` | `/api/tenants/{tenantId}/sites/{id}` | Delete site             | Owners & Admins |
 
 #### Site Properties
 
@@ -136,13 +136,13 @@ Physical device management within sites.
 
 ### Device Operations
 
-| Method | Endpoint | Summary | Access Level |
-|--------|----------|---------|--------------|
-| `GET` | `/api/tenants/{tenantId}/sites/{siteId}/devices` | List site devices | Tenant members |
-| `POST` | `/api/tenants/{tenantId}/sites/{siteId}/devices` | Register new device | Owners & Admins |
-| `GET` | `/api/tenants/{tenantId}/sites/{siteId}/devices/{id}` | Get device details | Tenant members |
-| `PATCH` | `/api/tenants/{tenantId}/sites/{siteId}/devices/{id}` | Update device configuration | Owners & Admins |
-| `DELETE` | `/api/tenants/{tenantId}/sites/{siteId}/devices/{id}` | Decommission device | Owners & Admins |
+| Method   | Endpoint                                              | Summary                     | Access Level    |
+| -------- | ----------------------------------------------------- | --------------------------- | --------------- |
+| `GET`    | `/api/tenants/{tenantId}/sites/{siteId}/devices`      | List site devices           | Tenant members  |
+| `POST`   | `/api/tenants/{tenantId}/sites/{siteId}/devices`      | Register new device         | Owners & Admins |
+| `GET`    | `/api/tenants/{tenantId}/sites/{siteId}/devices/{id}` | Get device details          | Tenant members  |
+| `PATCH`  | `/api/tenants/{tenantId}/sites/{siteId}/devices/{id}` | Update device configuration | Owners & Admins |
+| `DELETE` | `/api/tenants/{tenantId}/sites/{siteId}/devices/{id}` | Decommission device         | Owners & Admins |
 
 #### Device Properties
 
@@ -165,17 +165,17 @@ Physical device management within sites.
 
 ### Standard HTTP Status Codes
 
-| Code | Description | When Used |
-|------|-------------|-----------|
-| `200` | OK | Successful GET/PATCH operations |
-| `201` | Created | Successful POST operations |
-| `204` | No Content | Successful DELETE operations |
-| `400` | Bad Request | Invalid request data |
-| `401` | Unauthorized | Missing or invalid authentication |
-| `403` | Forbidden | Insufficient permissions |
-| `404` | Not Found | Resource not found |
-| `409` | Conflict | Resource already exists |
-| `422` | Unprocessable Entity | Validation errors |
+| Code  | Description          | When Used                         |
+| ----- | -------------------- | --------------------------------- |
+| `200` | OK                   | Successful GET/PATCH operations   |
+| `201` | Created              | Successful POST operations        |
+| `204` | No Content           | Successful DELETE operations      |
+| `400` | Bad Request          | Invalid request data              |
+| `401` | Unauthorized         | Missing or invalid authentication |
+| `403` | Forbidden            | Insufficient permissions          |
+| `404` | Not Found            | Resource not found                |
+| `409` | Conflict             | Resource already exists           |
+| `422` | Unprocessable Entity | Validation errors                 |
 
 ### Error Response Format
 
@@ -335,5 +335,5 @@ When making breaking changes:
 
 ---
 
-*Last Updated: January 31, 2025*
-*Total Endpoints: 25 (1 health + 9 tenants + 6 users + 5 sites + 5 devices)*
+_Last Updated: January 31, 2025_
+_Total Endpoints: 25 (1 health + 9 tenants + 6 users + 5 sites + 5 devices)_

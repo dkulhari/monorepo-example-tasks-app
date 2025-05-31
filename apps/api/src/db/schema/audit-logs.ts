@@ -1,6 +1,7 @@
-import { pgTable, uuid, varchar, text, timestamp, pgEnum, json, inet, index } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
-import { id, auditActionEnum, resourceTypeEnum } from "./common";
+import { index, inet, json, pgEnum, pgTable, text, timestamp, uuid, varchar } from "drizzle-orm/pg-core";
+
+import { auditActionEnum, id, resourceTypeEnum } from "./common";
 import { tenants } from "./tenants-new";
 import { users } from "./users";
 
@@ -30,7 +31,7 @@ export const auditLogs = pgTable("audit_logs", {
   ipAddress: inet("ip_address"),
   userAgent: text("user_agent"),
   timestamp: timestamp("timestamp", { withTimezone: true }).notNull().defaultNow(),
-}, (table) => ({
+}, table => ({
   // Indexes for performance
   tenantIdIdx: index("audit_logs_tenant_id_idx").on(table.tenantId),
   userIdIdx: index("audit_logs_user_id_idx").on(table.userId),

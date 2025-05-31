@@ -1,5 +1,4 @@
 import createRouter from "../../lib/create-router";
-
 import * as handlers from "./devices.handlers";
 import * as routes from "./devices.routes";
 

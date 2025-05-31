@@ -37,7 +37,6 @@ process.on("uncaughtException", (error) => {
 });
 logger.info(`Server is running on port ${port}`);
 
-
 serve({
   fetch: app.fetch,
   port,

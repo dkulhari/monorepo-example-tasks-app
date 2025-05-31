@@ -1,5 +1,4 @@
 import createRouter from "../../lib/create-router";
-
 import * as handlers from "./users.handlers";
 import * as routes from "./users.routes";
 

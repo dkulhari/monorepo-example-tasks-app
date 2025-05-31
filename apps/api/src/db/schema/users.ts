@@ -1,4 +1,5 @@
-import { pgTable, uuid, varchar, pgEnum, json, index } from "drizzle-orm/pg-core";
+import { index, json, pgEnum, pgTable, uuid, varchar } from "drizzle-orm/pg-core";
+
 import { id, timestamps, userTypeEnum } from "./common";
 
 // Create enum
@@ -31,7 +32,7 @@ export const users = pgTable("users", {
     mfaMethod?: "totp" | "sms" | "email";
   }>().default({}),
   ...timestamps,
-}, (table) => ({
+}, table => ({
   // Indexes for performance
   keycloakIdIdx: index("users_keycloak_id_idx").on(table.keycloakId),
   emailIdx: index("users_email_idx").on(table.email),

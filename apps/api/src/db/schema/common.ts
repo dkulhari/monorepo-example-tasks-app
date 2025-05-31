@@ -1,4 +1,4 @@
-import { uuid, timestamp } from "drizzle-orm/pg-core";
+import { timestamp, uuid } from "drizzle-orm/pg-core";
 
 // Common timestamp columns
 export const timestamps = {

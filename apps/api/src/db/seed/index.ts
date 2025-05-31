@@ -6,8 +6,8 @@ import { tenants, userTenantAssociations } from "../schema";
 const KEYCLOAK_USERS = {
   testuser: "51a1090a-15d7-44bc-afc8-9b1350a4773b", // testuser@example.com
   // Add more users as needed
-  //admin: "admin-user-id-here",
-  //user2: "user2-id-here",
+  // admin: "admin-user-id-here",
+  // user2: "user2-id-here",
 };
 
 export async function seedDatabase() {
@@ -100,12 +100,12 @@ export async function seedDatabase() {
     console.log("\n📊 Summary:");
     console.log(`   • Tenants: ${[acmeCorp, techStartup, consultingFirm].length}`);
     console.log(`   • Tenant-User relationships: 3`);
-    
+
     console.log("\n🏢 Created tenants:");
     console.log(`   • ${acmeCorp.name} (${acmeCorp.slug}) - ${acmeCorp.type}`);
     console.log(`   • ${techStartup.name} (${techStartup.slug}) - ${techStartup.type}`);
     console.log(`   • ${consultingFirm.name} (${consultingFirm.slug}) - ${consultingFirm.type}`);
-    
+
     console.log("\n👤 User access:");
     console.log(`   • testuser (${KEYCLOAK_USERS.testuser}):`);
     console.log(`     - Owner of: ${acmeCorp.name}`);
@@ -116,8 +116,8 @@ export async function seedDatabase() {
       tenants: [acmeCorp, techStartup, consultingFirm],
       success: true,
     };
-
-  } catch (error) {
+  }
+  catch (error) {
     console.error("❌ Error seeding database:", error);
     throw error;
   }
@@ -129,20 +129,20 @@ export function getKeycloakUserId(usernameOrToken: string): string {
   if (KEYCLOAK_USERS[usernameOrToken as keyof typeof KEYCLOAK_USERS]) {
     return KEYCLOAK_USERS[usernameOrToken as keyof typeof KEYCLOAK_USERS];
   }
-  
+
   // If it looks like a UUID, return as-is
   if (usernameOrToken.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)) {
     return usernameOrToken;
   }
-  
+
   throw new Error(`Unknown user: ${usernameOrToken}. Please add to KEYCLOAK_USERS mapping.`);
 }
 
 // Helper function to add a user to a tenant
 export async function addUserToTenant(
-  tenantSlug: string, 
-  userId: string, 
-  role: "owner" | "admin" | "member" = "member"
+  tenantSlug: string,
+  userId: string,
+  role: "owner" | "admin" | "member" = "member",
 ) {
   const tenant = await db.query.tenants.findFirst({
     where: (tenants, { eq }) => eq(tenants.slug, tenantSlug),
@@ -173,4 +173,4 @@ if (import.meta.url === `file://${process.argv[1]}`) {
       console.error("❌ Seeding failed:", error);
       process.exit(1);
     });
-} 
+}

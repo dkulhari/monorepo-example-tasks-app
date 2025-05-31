@@ -1,10 +1,11 @@
-import { readFileSync, readdirSync, existsSync, writeFileSync } from "fs";
-import { join, basename, dirname } from "path";
-import { createHash } from "crypto";
-import { fileURLToPath } from "url";
-import { db } from "./index";
 import { sql } from "drizzle-orm";
-import { pgTable, serial, varchar, timestamp, boolean } from "drizzle-orm/pg-core";
+import { boolean, pgTable, serial, timestamp, varchar } from "drizzle-orm/pg-core";
+import { createHash } from "node:crypto";
+import { existsSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
+
+import { db } from "./index";
 
 // Migration tracking table
 const migrations = pgTable("migrations", {
@@ -15,12 +16,12 @@ const migrations = pgTable("migrations", {
   checksum: varchar("checksum", { length: 64 }).notNull(),
 });
 
-interface MigrationFile {
+type MigrationFile = {
   filename: string;
   filepath: string;
   checksum: string;
   isRollback: boolean;
-}
+};
 
 class MigrationRunner {
   private migrationsPath: string;
@@ -44,11 +45,11 @@ class MigrationRunner {
       .filter(f => f.endsWith(".sql") && !f.includes("rollback"))
       .sort();
 
-    return files.map(filename => {
+    return files.map((filename) => {
       const filepath = join(this.migrationsPath, filename);
       const content = readFileSync(filepath, "utf-8");
       const checksum = this.calculateChecksum(content);
-      
+
       return {
         filename,
         filepath,
@@ -107,11 +108,11 @@ class MigrationRunner {
    */
   private async applyMigration(migration: MigrationFile): Promise<void> {
     const content = readFileSync(migration.filepath, "utf-8");
-    
+
     console.log(`📄 Applying migration: ${migration.filename}`);
-    
+
     const startTime = Date.now();
-    
+
     try {
       // Split by semicolon but respect statements that might contain semicolons in strings
       const statements = content
@@ -135,10 +136,10 @@ class MigrationRunner {
 
       const duration = Date.now() - startTime;
       console.log(`✅ Applied ${migration.filename} (${duration}ms)`);
-      
-    } catch (error) {
+    }
+    catch (error) {
       console.error(`❌ Failed to apply ${migration.filename}:`, error);
-      
+
       // Record failed migration
       try {
         await db.insert(migrations).values({
@@ -146,10 +147,11 @@ class MigrationRunner {
           checksum: migration.checksum,
           success: false,
         });
-      } catch (recordError) {
+      }
+      catch (recordError) {
         // Ignore error recording failure
       }
-      
+
       throw error;
     }
   }
@@ -161,12 +163,12 @@ class MigrationRunner {
     console.log("🚀 Running migrations...\n");
 
     await this.ensureMigrationsTable();
-    
+
     const migrationFiles = this.getMigrationFiles();
     const appliedMigrations = await this.getAppliedMigrations();
-    
+
     const pendingMigrations = migrationFiles.filter(
-      m => !appliedMigrations.has(m.filename)
+      m => !appliedMigrations.has(m.filename),
     );
 
     if (pendingMigrations.length === 0) {
@@ -209,7 +211,7 @@ class MigrationRunner {
 
     if (!rollbackFile) {
       console.error(`❌ No rollback file found for ${migrationToRollback.filename}`);
-      console.log(`   Expected: ${migrationToRollback.filename.replace('.sql', '_rollback.sql')}`);
+      console.log(`   Expected: ${migrationToRollback.filename.replace(".sql", "_rollback.sql")}`);
       return;
     }
 
@@ -234,8 +236,8 @@ class MigrationRunner {
         .where(sql`${migrations.filename} = ${migrationToRollback.filename}`);
 
       console.log(`✅ Rolled back ${migrationToRollback.filename}`);
-      
-    } catch (error) {
+    }
+    catch (error) {
       console.error(`❌ Failed to rollback ${migrationToRollback.filename}:`, error);
       throw error;
     }
@@ -256,7 +258,7 @@ class MigrationRunner {
       .orderBy(migrations.appliedAt);
 
     const appliedMap = new Map(
-      appliedRecords.map(r => [r.filename, r])
+      appliedRecords.map(r => [r.filename, r]),
     );
 
     console.log("File                                    | Status    | Applied At");
@@ -264,15 +266,15 @@ class MigrationRunner {
 
     for (const file of migrationFiles) {
       const applied = appliedMap.get(file.filename);
-      const status = applied 
-        ? (applied.success ? "✅ Applied" : "❌ Failed") 
+      const status = applied
+        ? (applied.success ? "✅ Applied" : "❌ Failed")
         : "⏳ Pending";
-      const appliedAt = applied 
+      const appliedAt = applied
         ? applied.appliedAt.toISOString().replace("T", " ").substring(0, 19)
         : "-";
-      
+
       console.log(
-        `${file.filename.padEnd(40)} | ${status.padEnd(10)} | ${appliedAt}`
+        `${file.filename.padEnd(40)} | ${status.padEnd(10)} | ${appliedAt}`,
       );
     }
 
@@ -284,14 +286,11 @@ class MigrationRunner {
    * Create a new migration file
    */
   async create(name: string): Promise<void> {
-    const timestamp = new Date().toISOString()
-      .replace(/[-:]/g, "")
-      .replace("T", "_")
-      .substring(0, 15);
-    
+    const timestamp = new Date().toISOString().replace(/[-:]/g, "").replace("T", "_").substring(0, 15);
+
     const filename = `${timestamp}_${name.toLowerCase().replace(/\s+/g, "_")}.sql`;
     const rollbackFilename = filename.replace(".sql", "_rollback.sql");
-    
+
     const migrationPath = join(this.migrationsPath, filename);
     const rollbackPath = join(this.migrationsPath, rollbackFilename);
 
@@ -330,15 +329,15 @@ async function main() {
       case "up":
         await runner.up();
         break;
-      
+
       case "down":
         await runner.down();
         break;
-      
+
       case "status":
         await runner.status();
         break;
-      
+
       case "create":
         const name = process.argv[3];
         if (!name) {
@@ -348,7 +347,7 @@ async function main() {
         }
         await runner.create(name);
         break;
-      
+
       default:
         console.log("📋 Database Migration Tool\n");
         console.log("Commands:");
@@ -360,7 +359,8 @@ async function main() {
         console.log("  npm run migrate <command>");
         console.log("  npm run migrate create <migration-name>");
     }
-  } catch (error) {
+  }
+  catch (error) {
     console.error("\n💥 Migration error:", error);
     process.exit(1);
   }

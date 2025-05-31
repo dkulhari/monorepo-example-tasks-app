@@ -7,8 +7,9 @@ import type * as routes from "./sites.routes";
 
 import { db } from "../../db";
 import { sites } from "../../db/schema";
+import { getDataSyncService } from "../../lib/permify/data-sync";
 import { requireUser } from "../../middleware/keycloak";
-import { getTenant, requireRole } from "../../middleware/tenant";
+import { getTenant } from "../../middleware/tenant";
 
 // GET /tenants/{tenantId}/sites - List sites for a tenant
 export const list: AppRouteHandler<routes.ListRoute> = async (c) => {
@@ -34,10 +35,11 @@ export const list: AppRouteHandler<routes.ListRoute> = async (c) => {
 
 // POST /tenants/{tenantId}/sites - Create a new site
 export const create: AppRouteHandler<routes.CreateRoute> = async (c) => {
-  requireUser(c);
+  const user = requireUser(c);
   const tenant = getTenant(c);
   const { tenantId } = c.req.valid("param");
   const siteData = c.req.valid("json");
+  const dataSync = getDataSyncService();
 
   // Verify tenant access
   if (tenant.id !== tenantId) {
@@ -47,15 +49,24 @@ export const create: AppRouteHandler<routes.CreateRoute> = async (c) => {
     );
   }
 
-  const [newSite] = await db
-    .insert(sites)
-    .values({
-      ...siteData,
-      tenantId,
-    })
-    .returning();
+  // Use transaction for consistency
+  const result = await db.transaction(async (tx) => {
+    const [newSite] = await tx
+      .insert(sites)
+      .values({
+        ...siteData,
+        tenantId,
+      })
+      .returning();
 
-  return c.json(newSite, HttpStatusCodes.CREATED);
+    // Sync to Permify
+    // Note: We could assign the creator as site manager if needed
+    await dataSync.syncSiteCreation(newSite.id, tenantId);
+
+    return newSite;
+  });
+
+  return c.json(result, HttpStatusCodes.CREATED);
 };
 
 // GET /tenants/{tenantId}/sites/{id} - Get site details

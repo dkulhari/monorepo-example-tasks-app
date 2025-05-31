@@ -18,6 +18,9 @@ export const envSchema = z.object({
   KEYCLOAK_URL: z.string(),
   KEYCLOAK_REALM: z.string(),
   KEYCLOAK_CLIENT_ID: z.string(),
+  // Permify configuration (optional)
+  PERMIFY_ENDPOINT: z.string().optional(),
+  PERMIFY_API_KEY: z.string().optional(),
 });
 
 export type AppEnv = z.infer<typeof envSchema>;
@@ -33,4 +36,5 @@ catch (e) {
   console.error("❌Invalid environment variables: ", error.flatten().fieldErrors);
   process.exit(1);
 }
+export { env };
 export default env;

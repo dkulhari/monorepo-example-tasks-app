@@ -7,6 +7,7 @@ import type * as routes from "./devices.routes";
 
 import { db } from "../../db";
 import { devices, sites } from "../../db/schema";
+import { getDataSyncService } from "../../lib/permify/data-sync";
 import { requireUser } from "../../middleware/keycloak";
 import { getTenant } from "../../middleware/tenant";
 
@@ -77,15 +78,25 @@ export const create: AppRouteHandler<routes.CreateRoute> = async (c) => {
     );
   }
 
-  const [newDevice] = await db
-    .insert(devices)
-    .values({
-      ...deviceData,
-      siteId,
-    })
-    .returning();
+  const dataSync = getDataSyncService();
 
-  return c.json(newDevice, HttpStatusCodes.CREATED);
+  // Use transaction for consistency
+  const result = await db.transaction(async (tx) => {
+    const [newDevice] = await tx
+      .insert(devices)
+      .values({
+        ...deviceData,
+        siteId,
+      })
+      .returning();
+
+    // Sync to Permify
+    await dataSync.syncDeviceCreation(newDevice.id, siteId);
+
+    return newDevice;
+  });
+
+  return c.json(result, HttpStatusCodes.CREATED);
 };
 
 // GET /tenants/{tenantId}/sites/{siteId}/devices/{id} - Get device details

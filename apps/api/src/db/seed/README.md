@@ -5,6 +5,7 @@ This directory contains scripts for seeding the database with initial developmen
 ## Overview
 
 The seeding system creates:
+
 - **Tenants**: Sample organizations with different plans and settings
 - **Tenant-User Relationships**: Connects Keycloak users to tenants with specific roles
 - **Sample Tasks**: Creates tasks for each tenant to demonstrate the multi-tenant system
@@ -29,6 +30,7 @@ pnpm tsx src/db/seed/get-keycloak-users.ts
 ```
 
 This will output a mapping like:
+
 ```typescript
 const KEYCLOAK_USERS = {
   testuser: "51a1090a-15d7-44bc-afc8-9b1350a4773b", // testuser@example.com
@@ -56,6 +58,7 @@ pnpm seed seed
 ```
 
 This will:
+
 1. Clear existing data (tasks, tenant_users, tenants)
 2. Create 3 sample tenants
 3. Connect your Keycloak users to tenants
@@ -68,6 +71,7 @@ pnpm seed add-user <tenant-slug> <user-id-or-username> [role]
 ```
 
 Examples:
+
 ```bash
 # Add user as member (default role)
 pnpm seed add-user acme-corp testuser
@@ -105,6 +109,7 @@ pnpm seed help
 ### User Roles
 
 The default seeding assigns the `testuser` to all three tenants with different roles:
+
 - **Owner** of Acme Corporation
 - **Member** of Tech Startup Inc
 - **Admin** of Consulting Firm LLC
@@ -112,6 +117,7 @@ The default seeding assigns the `testuser` to all three tenants with different r
 ### Sample Tasks
 
 Each tenant gets sample tasks relevant to their business type:
+
 - Acme Corp: Corporate tasks (financial reports, board presentations)
 - Tech Startup: Development tasks (deployments, code reviews)
 - Consulting Firm: Client-focused tasks (meetings, research)
@@ -139,6 +145,7 @@ pnpm tsx src/db/seed/get-keycloak-users.ts
 ```
 
 **Requirements:**
+
 - Keycloak must be running
 - `KEYCLOAK_CLIENT_SECRET` must be set in your `.env` file
 - The client must have admin permissions to read users
@@ -172,12 +179,14 @@ KEYCLOAK_CLIENT_SECRET=your-client-secret
 ### "Unknown user" Error
 
 If you get an error like "Unknown user: testuser", it means:
+
 1. The username isn't in the `KEYCLOAK_USERS` mapping
 2. Update the mapping with the correct Keycloak user ID
 
 ### Database Connection Error
 
 Make sure:
+
 1. PostgreSQL is running
 2. Database exists (`contradb`)
 3. `DATABASE_URL` is correct in `.env`
@@ -185,6 +194,7 @@ Make sure:
 ### Keycloak User Fetching Error
 
 Make sure:
+
 1. Keycloak is running on the correct URL
 2. `KEYCLOAK_CLIENT_SECRET` is set
 3. The client has admin permissions
@@ -202,4 +212,4 @@ Make sure:
 - The seed script is for **development only**
 - Never run seeding in production
 - User IDs in the seed script should match your development Keycloak instance
-- The script clears existing data - use with caution 
+- The script clears existing data - use with caution

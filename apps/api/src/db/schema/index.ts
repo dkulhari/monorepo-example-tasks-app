@@ -1,40 +1,68 @@
-/* eslint-disable ts/no-redeclare */
-import { boolean, pgTable, serial, text, timestamp, uuid, varchar } from "drizzle-orm/pg-core";
-import { z } from "zod";
+// Re-export all schemas and types
+export * from "./common";
+export * from "./tenants-new";
+export * from "./users";
+export * from "./user-tenant-associations";
+export * from "./sites";
+export * from "./user-site-assignments";
+export * from "./devices";
+export * from "./audit-logs";
+export * from "./tenant-invitations";
 
-// Import tenants table for foreign key reference
-import { tenants } from "./tenants";
+// Import tables
+import { tenants } from "./tenants-new";
+import { users } from "./users";
+import { userTenantAssociations } from "./user-tenant-associations";
+import { sites } from "./sites";
+import { userSiteAssignments } from "./user-site-assignments";
+import { devices } from "./devices";
+import { auditLogs } from "./audit-logs";
+import { tenantInvitations } from "./tenant-invitations";
 
-export const tasks = pgTable("tasks", {
-  id: serial("id").primaryKey(),
-  tenantId: uuid("tenant_id").notNull().references(() => tenants.id, { onDelete: "cascade" }),
-  userId: varchar("user_id", { length: 255 }).notNull(),
-  name: text("name").notNull(),
-  done: boolean("done").notNull().default(false),
-  createdAt: timestamp("created_at").notNull().defaultNow(),
-  updatedAt: timestamp("updated_at").notNull().defaultNow().$onUpdate(() => new Date()),
-});
+// Import all relations from the separate relations file
+import {
+  tenantsRelations,
+  usersRelations,
+  userTenantAssociationsRelations,
+  sitesRelations,
+  userSiteAssignmentsRelations,
+  devicesRelations,
+  auditLogsRelations,
+  tenantInvitationsRelations,
+} from "./relations";
 
-// Manual Zod schemas to avoid drizzle-zod compatibility issues
-export const selectTasksSchema = z.object({
-  id: z.number(),
-  tenantId: z.string(),
-  userId: z.string(),
-  name: z.string(),
-  done: z.boolean(),
-  createdAt: z.date(),
-  updatedAt: z.date(),
-});
-export type selectTasksSchema = z.infer<typeof selectTasksSchema>;
+// Export all relations
+export {
+  tenantsRelations,
+  usersRelations,
+  userTenantAssociationsRelations,
+  sitesRelations,
+  userSiteAssignmentsRelations,
+  devicesRelations,
+  auditLogsRelations,
+  tenantInvitationsRelations,
+};
 
-export const insertTasksSchema = z.object({
-  name: z.string().min(1).max(500),
-  done: z.boolean().optional(),
-});
-export type insertTasksSchema = z.infer<typeof insertTasksSchema>;
+// Export all tables as a single object for easy access
+export const schema = {
+  // Tables
+  tenants,
+  users,
+  userTenantAssociations,
+  sites,
+  userSiteAssignments,
+  devices,
+  auditLogs,
+  tenantInvitations,
+  
+  // Relations
+  tenantsRelations,
+  usersRelations,
+  userTenantAssociationsRelations,
+  sitesRelations,
+  userSiteAssignmentsRelations,
+  devicesRelations,
+  auditLogsRelations,
+  tenantInvitationsRelations,
+};
 
-export const patchTasksSchema = insertTasksSchema.partial();
-export type patchTasksSchema = z.infer<typeof patchTasksSchema>;
-
-// Export tenant tables
-export * from "./tenants";

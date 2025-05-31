@@ -10,8 +10,8 @@ export default function configureOpenAPI(app: AppOpenAPI) {
     openapi: "3.0.0",
     info: {
       version: packageJSON.version,
-      title: "Tasks API",
-      description: "A simple tasks API with Keycloak authentication. For protected endpoints (POST, PATCH, DELETE), you need to:\n1. Login at http://localhost:5173\n2. Get your JWT token from browser dev tools\n3. Add 'Authorization: Bearer <token>' header",
+      title: "Multitenant IoT API",
+      description: "A multitenant IoT management API with Keycloak authentication. Manages tenants, users, sites, and devices with role-based access control. For protected endpoints (POST, PATCH, DELETE), you need to:\n1. Login at http://localhost:5173\n2. Get your JWT token from browser dev tools\n3. Add 'Authorization: Bearer <token>' header",
     },
   });
 

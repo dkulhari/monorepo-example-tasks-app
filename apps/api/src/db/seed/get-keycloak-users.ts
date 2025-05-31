@@ -2,10 +2,10 @@
 
 /**
  * Helper script to get Keycloak user IDs for seeding
- * 
+ *
  * This script helps you find the actual Keycloak user IDs that you need
  * to update in the KEYCLOAK_USERS mapping in the seed script.
- * 
+ *
  * Usage:
  *   pnpm tsx src/db/seed/get-keycloak-users.ts
  */
@@ -16,26 +16,26 @@ const KEYCLOAK_BASE_URL = env.KEYCLOAK_URL;
 const KEYCLOAK_REALM = env.KEYCLOAK_REALM;
 const KEYCLOAK_CLIENT_ID = env.KEYCLOAK_CLIENT_ID;
 
-interface KeycloakUser {
+type KeycloakUser = {
   id: string;
   username: string;
   email?: string;
   firstName?: string;
   lastName?: string;
   enabled: boolean;
-}
+};
 
-interface TokenResponse {
+type TokenResponse = {
   access_token: string;
   token_type: string;
   expires_in: number;
-}
+};
 
 async function getAdminToken(): Promise<string> {
   // For development, we'll try to get a token using the client credentials flow
   // This requires the client to have "Service accounts enabled" in Keycloak
   const tokenUrl = `${KEYCLOAK_BASE_URL}/realms/${KEYCLOAK_REALM}/protocol/openid-connect/token`;
-  
+
   // Try with just client_id first (for public clients)
   const response = await fetch(tokenUrl, {
     method: "POST",
@@ -59,9 +59,9 @@ async function getAdminToken(): Promise<string> {
 
 async function getKeycloakUsers(): Promise<KeycloakUser[]> {
   const token = await getAdminToken();
-  
+
   const usersUrl = `${KEYCLOAK_BASE_URL}/admin/realms/${KEYCLOAK_REALM}/users`;
-  
+
   const response = await fetch(usersUrl, {
     headers: {
       Authorization: `Bearer ${token}`,
@@ -86,7 +86,7 @@ async function main() {
 
   try {
     const users = await getKeycloakUsers();
-    
+
     if (users.length === 0) {
       console.log("❌ No users found in Keycloak realm");
       return;
@@ -94,12 +94,12 @@ async function main() {
 
     console.log("👥 Found Keycloak users:");
     console.log("");
-    
+
     users.forEach((user) => {
-      const displayName = user.firstName && user.lastName 
+      const displayName = user.firstName && user.lastName
         ? `${user.firstName} ${user.lastName}`
         : user.email || "No name";
-        
+
       console.log(`   • ${user.username} (${displayName})`);
       console.log(`     ID: ${user.id}`);
       console.log(`     Email: ${user.email || "N/A"}`);
@@ -114,8 +114,8 @@ async function main() {
       console.log(`  ${user.username}: "${user.id}", // ${user.email || "no email"}`);
     });
     console.log("};");
-
-  } catch (error) {
+  }
+  catch (error) {
     console.error("❌ Error fetching users:", error);
     console.log("");
     console.log("💡 Make sure:");
@@ -132,4 +132,4 @@ async function main() {
   }
 }
 
-main(); 
+main();

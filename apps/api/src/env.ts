@@ -5,7 +5,7 @@ import { z } from "zod";
 expand(config());
 
 export const envSchema = z.object({
-  PORT: z.coerce.number().default(3001),
+  PORT: z.coerce.number().default(4001),
   LOG_LEVEL: z.enum(["fatal", "error", "warn", "info", "debug", "trace"]),
   NODE_ENV: z.enum(["development", "production"]),
   // Database configuration
@@ -15,9 +15,9 @@ export const envSchema = z.object({
   DB_PASSWORD: z.string(),
   DB_NAME: z.string(),
   // Keycloak configuration
-  KEYCLOAK_URL: z.string().default("http://localhost:8080"),
-  KEYCLOAK_REALM: z.string().default("contrack"),
-  KEYCLOAK_CLIENT_ID: z.string().default("contrackapi"),
+  KEYCLOAK_URL: z.string(),
+  KEYCLOAK_REALM: z.string(),
+  KEYCLOAK_CLIENT_ID: z.string(),
 });
 
 export type AppEnv = z.infer<typeof envSchema>;

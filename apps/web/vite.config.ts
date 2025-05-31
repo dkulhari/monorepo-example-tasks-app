@@ -23,8 +23,9 @@ export default defineConfig({
     react(),
   ],
   server: {
+    port: 4000,
     proxy: {
-      "/api": "http://localhost:3001",
+      "/api": "http://localhost:4001",
     },
   },
 });

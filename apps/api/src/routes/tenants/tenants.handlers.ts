@@ -7,7 +7,7 @@ import type { AppRouteHandler } from "../../lib/types";
 import type * as routes from "./tenants.routes";
 
 import { db } from "../../db";
-import { tenantInvitations, tenants, tenantUsers } from "../../db/schema";
+import { tenantInvitations, tenants, userTenantAssociations } from "../../db/schema";
 import { requireUser } from "../../middleware/keycloak";
 import { getTenant, getUserRole } from "../../middleware/tenant";
 
@@ -21,21 +21,21 @@ export const list: AppRouteHandler<routes.ListRoute> = async (c) => {
       id: tenants.id,
       name: tenants.name,
       slug: tenants.slug,
-      domain: tenants.domain,
+      keycloakGroupId: tenants.keycloakGroupId,
       settings: tenants.settings,
-      plan: tenants.plan,
-      isActive: tenants.isActive,
+      type: tenants.type,
+      status: tenants.status,
       createdAt: tenants.createdAt,
       updatedAt: tenants.updatedAt,
-      userRole: tenantUsers.role,
+      userRole: userTenantAssociations.role,
     })
     .from(tenants)
-    .innerJoin(tenantUsers, eq(tenants.id, tenantUsers.tenantId))
+    .innerJoin(userTenantAssociations, eq(tenants.id, userTenantAssociations.tenantId))
     .where(
       and(
-        eq(tenantUsers.userId, user.sub),
-        eq(tenantUsers.isActive, true),
-        eq(tenants.isActive, true),
+        eq(userTenantAssociations.userId, user.sub),
+        eq(userTenantAssociations.status, "active"),
+        eq(tenants.status, "active"),
       ),
     );
 
@@ -68,7 +68,7 @@ export const create: AppRouteHandler<routes.CreateRoute> = async (c) => {
     .returning();
 
   // Add user as owner
-  await db.insert(tenantUsers).values({
+  await db.insert(userTenantAssociations).values({
     tenantId: newTenant.id,
     userId: user.sub,
     role: "owner",
@@ -139,18 +139,23 @@ export const listUsers: AppRouteHandler<routes.ListUsersRoute> = async (c) => {
 
   const users = await db
     .select({
-      id: tenantUsers.id,
-      tenantId: tenantUsers.tenantId,
-      userId: tenantUsers.userId,
-      role: tenantUsers.role,
-      isActive: tenantUsers.isActive,
-      createdAt: tenantUsers.createdAt,
+      id: userTenantAssociations.id,
+      tenantId: userTenantAssociations.tenantId,
+      userId: userTenantAssociations.userId,
+      role: userTenantAssociations.role,
+      status: userTenantAssociations.status,
+      invitedAt: userTenantAssociations.invitedAt,
+      acceptedAt: userTenantAssociations.acceptedAt,
+      invitedBy: userTenantAssociations.invitedBy,
+      lastActiveAt: userTenantAssociations.lastActiveAt,
+      createdAt: userTenantAssociations.createdAt,
+      updatedAt: userTenantAssociations.updatedAt,
     })
-    .from(tenantUsers)
+    .from(userTenantAssociations)
     .where(
       and(
-        eq(tenantUsers.tenantId, tenant.id),
-        eq(tenantUsers.isActive, true),
+        eq(userTenantAssociations.tenantId, tenant.id),
+        eq(userTenantAssociations.status, "active"),
       ),
     );
 
@@ -163,7 +168,8 @@ export const inviteUser: AppRouteHandler<routes.InviteUserRoute> = async (c) => 
   const tenant = getTenant(c);
   const userRole = getUserRole(c);
   const user = requireUser(c);
-  const { email, role = "member" } = c.req.valid("json");
+  const body = c.req.valid("json");
+  const { email, role = "member" } = body;
 
   // Only owners and admins can invite users
   if (!["owner", "admin"].includes(userRole)) {
@@ -182,7 +188,7 @@ export const inviteUser: AppRouteHandler<routes.InviteUserRoute> = async (c) => 
       tenantId: tenant.id,
       email,
       role,
-      invitedBy: user.sub,
+      createdBy: user.sub,
       token,
       expiresAt,
     })
@@ -215,12 +221,12 @@ export const updateUserRole: AppRouteHandler<routes.UpdateUserRoleRoute> = async
   }
 
   await db
-    .update(tenantUsers)
+    .update(userTenantAssociations)
     .set({ role })
     .where(
       and(
-        eq(tenantUsers.tenantId, tenant.id),
-        eq(tenantUsers.userId, userId),
+        eq(userTenantAssociations.tenantId, tenant.id),
+        eq(userTenantAssociations.userId, userId),
       ),
     );
 
@@ -241,12 +247,12 @@ export const removeUser: AppRouteHandler<routes.RemoveUserRoute> = async (c) => 
   }
 
   await db
-    .update(tenantUsers)
-    .set({ isActive: false })
+    .update(userTenantAssociations)
+    .set({ status: "suspended" })
     .where(
       and(
-        eq(tenantUsers.tenantId, tenant.id),
-        eq(tenantUsers.userId, userId),
+        eq(userTenantAssociations.tenantId, tenant.id),
+        eq(userTenantAssociations.userId, userId),
       ),
     );
 

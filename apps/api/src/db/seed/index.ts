@@ -1,5 +1,5 @@
 import { db } from "../index";
-import { tenants, tenantUsers, tasks } from "../schema";
+import { tenants, userTenantAssociations } from "../schema";
 
 // Known Keycloak user IDs for development
 // These should match the actual user IDs from your Keycloak instance
@@ -16,8 +16,7 @@ export async function seedDatabase() {
   try {
     // Clear existing data (in reverse order due to foreign keys)
     console.log("🧹 Cleaning existing data...");
-    await db.delete(tasks);
-    await db.delete(tenantUsers);
+    await db.delete(userTenantAssociations);
     await db.delete(tenants);
 
     // Create tenants
@@ -26,30 +25,40 @@ export async function seedDatabase() {
       {
         name: "Acme Corporation",
         slug: "acme-corp",
-        domain: "acme.example.com",
-        plan: "enterprise",
-        settings: JSON.stringify({
-          theme: "corporate",
-          features: ["advanced-analytics", "custom-branding"],
-        }),
+        type: "enterprise",
+        settings: {
+          features: {
+            maxUsers: 100,
+            maxSites: 50,
+            enabledModules: ["advanced-analytics", "custom-branding"],
+          },
+          branding: {
+            primaryColor: "#0066cc",
+          },
+        },
       },
       {
         name: "Tech Startup Inc",
         slug: "tech-startup",
-        plan: "pro",
-        settings: JSON.stringify({
-          theme: "modern",
-          features: ["team-collaboration"],
-        }),
+        type: "standard",
+        settings: {
+          features: {
+            maxUsers: 20,
+            maxSites: 10,
+            enabledModules: ["team-collaboration"],
+          },
+        },
       },
       {
         name: "Consulting Firm LLC",
         slug: "consulting-firm",
-        plan: "free",
-        settings: JSON.stringify({
-          theme: "minimal",
-          features: [],
-        }),
+        type: "trial",
+        settings: {
+          features: {
+            maxUsers: 5,
+            maxSites: 2,
+          },
+        },
       },
     ]).returning();
 
@@ -57,7 +66,7 @@ export async function seedDatabase() {
 
     // Create tenant-user relationships
     console.log("👥 Creating tenant-user relationships...");
-    await db.insert(tenantUsers).values([
+    await db.insert(userTenantAssociations).values([
       // testuser is owner of Acme Corp
       {
         tenantId: acmeCorp.id,
@@ -86,77 +95,16 @@ export async function seedDatabase() {
 
     console.log("✅ Created tenant-user relationships");
 
-    // Create sample tasks
-    console.log("📝 Creating sample tasks...");
-    await db.insert(tasks).values([
-      // Tasks for Acme Corp
-      {
-        tenantId: acmeCorp.id,
-        userId: KEYCLOAK_USERS.testuser,
-        name: "Review Q4 financial reports",
-        done: false,
-      },
-      {
-        tenantId: acmeCorp.id,
-        userId: KEYCLOAK_USERS.testuser,
-        name: "Prepare board presentation",
-        done: true,
-      },
-      {
-        tenantId: acmeCorp.id,
-        userId: KEYCLOAK_USERS.testuser,
-        name: "Update company policies",
-        done: false,
-      },
-      
-      // Tasks for Tech Startup
-      {
-        tenantId: techStartup.id,
-        userId: KEYCLOAK_USERS.testuser,
-        name: "Deploy new feature to production",
-        done: false,
-      },
-      {
-        tenantId: techStartup.id,
-        userId: KEYCLOAK_USERS.testuser,
-        name: "Code review for authentication module",
-        done: true,
-      },
-      {
-        tenantId: techStartup.id,
-        userId: KEYCLOAK_USERS.testuser,
-        name: "Write API documentation",
-        done: false,
-      },
-      
-      // Tasks for Consulting Firm
-      {
-        tenantId: consultingFirm.id,
-        userId: KEYCLOAK_USERS.testuser,
-        name: "Client meeting preparation",
-        done: false,
-      },
-      {
-        tenantId: consultingFirm.id,
-        userId: KEYCLOAK_USERS.testuser,
-        name: "Research industry trends",
-        done: false,
-      },
-    ]);
-
-    console.log("✅ Created sample tasks");
-
     // Summary
     console.log("\n🎉 Database seeding completed successfully!");
     console.log("\n📊 Summary:");
     console.log(`   • Tenants: ${[acmeCorp, techStartup, consultingFirm].length}`);
     console.log(`   • Tenant-User relationships: 3`);
-    console.log(`   • Sample tasks: 8`);
     
     console.log("\n🏢 Created tenants:");
-    console.log(`   • ${acmeCorp.name} (${acmeCorp.slug}) - ${acmeCorp.plan}`);
-    console.log(`   • ${techStartup.name} (${techStartup.slug}) - ${techStartup.plan}`);
-    console.log(`   • ${consultingFirm.name} (${consultingFirm.slug}) - ${consultingFirm.plan}`);
+    console.log(`   • ${acmeCorp.name} (${acmeCorp.slug}) - ${acmeCorp.type}`);
+    console.log(`   • ${techStartup.name} (${techStartup.slug}) - ${techStartup.type}`);
+    console.log(`   • ${consultingFirm.name} (${consultingFirm.slug}) - ${consultingFirm.type}`);
     
     console.log("\n👤 User access:");
     console.log(`   • testuser (${KEYCLOAK_USERS.testuser}):`);
@@ -204,7 +152,7 @@ export async function addUserToTenant(
     throw new Error(`Tenant not found: ${tenantSlug}`);
   }
 
-  const [tenantUser] = await db.insert(tenantUsers).values({
+  const [tenantUser] = await db.insert(userTenantAssociations).values({
     tenantId: tenant.id,
     userId,
     role,

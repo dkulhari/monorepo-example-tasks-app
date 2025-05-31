@@ -5,14 +5,18 @@ import type { AppOpenAPI } from "../lib/types";
 
 import { BASE_PATH } from "../lib/constants";
 import indexRoute from "./index.route";
-import tasksRouter from "./tasks/tasks.index";
 import tenantsRouter from "./tenants/tenants.index";
+import usersRouter from "./users/users.index";
+import sitesRouter from "./sites/sites.index";
+import devicesRouter from "./devices/devices.index";
 
 export function registerRoutes(app: AppOpenAPI) {
   return app
     .route("/", indexRoute)
-    .route("/", tasksRouter)
-    .route("/", tenantsRouter);
+    .route("/", tenantsRouter)
+    .route("/", usersRouter)
+    .route("/", sitesRouter)
+    .route("/", devicesRouter);
 }
 
 // stand alone router type used for api client

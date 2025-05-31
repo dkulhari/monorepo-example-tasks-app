@@ -1,8 +1,8 @@
 import type { OpenAPIHono, RouteConfig, RouteHandler } from "@hono/zod-openapi";
 import type { PinoLogger } from "hono-pino";
 
-// Import tenant types directly from tenants schema
-import type { tenants } from "../db/schema/tenants";
+// Import tenant types directly from schema
+import type { tenants } from "../db/schema";
 import type { AppEnv } from "../env";
 import type { KeycloakUser } from "../middleware/keycloak";
 import type { BASE_PATH } from "./constants";

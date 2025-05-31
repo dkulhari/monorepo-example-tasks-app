@@ -6,7 +6,15 @@
       "Bash(pnpm install:*)",
       "Bash(pnpm db:generate:*)",
       "Bash(docker-compose up:*)",
-      "Bash(ls:*)"
+      "Bash(ls:*)",
+      "Bash(pnpm update:*)",
+      "Bash(pnpm list:*)",
+      "Bash(cat:*)",
+      "Bash(sed:*)",
+      "Bash(pnpm typecheck:*)",
+      "Bash(curl:*)",
+      "Bash(pnpm --filter api dev)",
+      "Bash(pnpm --filter api-client build)"
     ],
     "deny": []
   }

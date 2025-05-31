@@ -3,7 +3,7 @@ import { createMiddleware } from "hono/factory";
 import { HTTPException } from "hono/http-exception";
 
 import { db } from "../db";
-import { tenants, tenantUsers } from "../db/schema";
+import { tenants, userTenantAssociations } from "../db/schema";
 import { getUser } from "./keycloak";
 
 export type TenantContext = {
@@ -43,16 +43,16 @@ export function tenantMiddleware() {
       });
     }
 
-    if (!tenant || !tenant.isActive) {
+    if (!tenant || tenant.status !== "active") {
       throw new HTTPException(404, { message: "Tenant not found" });
     }
 
     // Check user membership
-    const membership = await db.query.tenantUsers.findFirst({
+    const membership = await db.query.userTenantAssociations.findFirst({
       where: and(
-        eq(tenantUsers.tenantId, tenant.id),
-        eq(tenantUsers.userId, user.sub),
-        eq(tenantUsers.isActive, true),
+        eq(userTenantAssociations.tenantId, tenant.id),
+        eq(userTenantAssociations.userId, user.sub),
+        eq(userTenantAssociations.status, "active"),
       ),
     });
 

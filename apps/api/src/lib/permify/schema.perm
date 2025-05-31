@@ -1,0 +1,115 @@
+// Multi-tenant platform authorization schema
+
+entity user {}
+
+entity system {
+    // System-wide admin relation
+    relation admin @user
+
+    // System admins can perform any action in the system
+    action create_tenant = admin
+    action manage_users = admin
+    action view_all_data = admin
+}
+
+entity tenant {
+    // Relations
+    relation system @system
+    relation owner @user
+    relation admin @user
+    relation member @user
+
+    // Hierarchical permissions
+    permission full_access = owner or system.admin
+    permission admin_access = admin or full_access
+    permission member_access = member or admin_access
+
+    // Actions
+    action create = system.admin
+    action delete = full_access
+    action update = admin_access
+    action view = member_access
+
+    // Tenant management actions
+    action manage_users = admin_access
+    action manage_sites = admin_access
+    action manage_billing = full_access
+    action invite_users = admin_access
+    action remove_users = admin_access
+    action change_settings = admin_access
+}
+
+entity site {
+    // Relations
+    relation parent @tenant
+    relation manager @user
+    relation operator @user
+
+    // Inherited permissions from tenant
+    permission tenant_admin = parent.admin_access
+    permission tenant_member = parent.member_access
+
+    // Local permissions
+    permission manager_access = manager or tenant_admin
+    permission operator_access = operator or manager_access or tenant_member
+
+    // Actions
+    action create = parent.admin_access
+    action delete = manager_access
+    action update = manager_access
+    action view = operator_access
+
+    // Site-specific actions
+    action manage_devices = manager_access
+    action operate_devices = operator_access
+    action view_reports = operator_access
+    action configure_alerts = manager_access
+}
+
+entity device {
+    // Relations
+    relation site @site
+
+    // Inherited permissions from site
+    permission site_manager = site.manager_access
+    permission site_operator = site.operator_access
+
+    // Actions
+    action create = site_manager
+    action delete = site_manager
+    action update = site_manager
+    action view = site_operator
+
+    // Device-specific actions
+    action control = site_operator
+    action read_data = site_operator
+    action configure = site_manager
+    action maintenance = site_manager
+}
+
+// Additional entities for future expansion
+
+entity resource {
+    // Generic resource that can belong to tenant, site, or device
+    relation owner @tenant#member @site#operator @device#site_operator
+    relation viewer @user @tenant#member @site#operator
+
+    action create = owner
+    action delete = owner
+    action update = owner
+    action view = viewer or owner
+}
+
+entity role {
+    // Custom role definitions per tenant
+    relation tenant @tenant
+    relation assignee @user
+    relation permissions @resource
+
+    permission tenant_admin = tenant.admin_access
+
+    action create = tenant_admin
+    action delete = tenant_admin
+    action update = tenant_admin
+    action assign = tenant_admin
+}

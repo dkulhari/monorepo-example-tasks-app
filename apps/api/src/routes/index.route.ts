@@ -13,14 +13,14 @@ const router = createRouter()
       path: "/",
       responses: {
         [HttpStatusCodes.OK]: jsonContent(
-          createMessageObjectSchema("Tasks API"),
-          "Tasks API",
+          createMessageObjectSchema("Multitenant IoT API"),
+          "Multitenant IoT API",
         ),
       },
     }),
     (c) => {
       return c.json({
-        message: "Tasks API",
+        message: "Multitenant IoT API",
       }, HttpStatusCodes.OK);
     },
   );

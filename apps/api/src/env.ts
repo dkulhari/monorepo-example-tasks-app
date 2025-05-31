@@ -18,6 +18,14 @@ export const envSchema = z.object({
   KEYCLOAK_URL: z.string().default("http://localhost:8080"),
   KEYCLOAK_REALM: z.string().default("contrack"),
   KEYCLOAK_CLIENT_ID: z.string().default("contrackapi"),
+  // Permify configuration
+  PERMIFY_ENABLED: z.string().default("true"),
+  PERMIFY_ENDPOINT: z.string().default("localhost:3476"),
+  PERMIFY_TENANT_ID: z.string().default("default"),
+  PERMIFY_CACHE_TTL: z.string().default("300"),
+  PERMIFY_CACHE_MAX_KEYS: z.string().default("10000"),
+  PERMIFY_TIMEOUT: z.string().default("5000"),
+  SYSTEM_ADMIN_USER_ID: z.string().optional(),
 });
 
 export type AppEnv = z.infer<typeof envSchema>;
@@ -33,4 +41,6 @@ catch (e) {
   console.error("❌Invalid environment variables: ", error.flatten().fieldErrors);
   process.exit(1);
 }
+
+export { env };
 export default env;

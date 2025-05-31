@@ -5,16 +5,22 @@ import type { PinoLogger } from "hono-pino";
 import type { tenants } from "../db/schema/tenants";
 import type { AppEnv } from "../env";
 import type { KeycloakUser } from "../middleware/keycloak";
+import type { createPermifyHelpers } from "../middleware/permify";
 import type { BASE_PATH } from "./constants";
+import type { PermifyService } from "./permify-service";
 
 export type AppBinding = {
   Bindings: AppEnv;
   Variables: {
     logger: PinoLogger;
     user?: KeycloakUser;
+    userId?: string;
     token?: string;
     tenant?: typeof tenants.$inferSelect;
+    tenantId?: string;
     userRole?: string;
+    permifyService?: PermifyService | null;
+    permifyHelpers?: ReturnType<typeof createPermifyHelpers> | null;
   };
 };
 

@@ -1,1 +1,187 @@
- 
+schema: >
+  entity user {}
+
+  entity system {
+    // System administrators have global privileges
+    relation admin @user
+
+    // System-wide permissions
+    permission manage_all = admin
+    permission create_tenant = admin
+    permission delete_tenant = admin
+    permission view_all_tenants = admin
+    permission manage_users = admin
+  }
+
+  entity tenant {
+    // Tenant ownership and administration
+    relation owner @user
+    relation admin @user
+    relation member @user
+
+    // System-level relation for inheritance
+    relation system @system
+
+    // Tenant permissions with system admin override
+    permission manage = owner or admin or system.admin
+    permission invite_users = owner or admin or system.admin
+    permission remove_users = owner or admin or system.admin
+    permission view_settings = owner or admin or member or system.admin
+    permission edit_settings = owner or admin or system.admin
+    permission delete = owner or system.admin
+    
+    // Permissions that cascade to child entities
+    permission admin_access = owner or admin or system.admin
+    permission member_access = owner or admin or member or system.admin
+  }
+
+  entity site {
+    // Site belongs to a tenant
+    relation tenant @tenant
+    
+    // Site-specific roles
+    relation manager @user
+    relation operator @user
+
+    // Site permissions with tenant inheritance
+    permission manage = manager or tenant.admin_access
+    permission operate = operator or manager or tenant.admin_access
+    permission view = operator or manager or tenant.member_access
+    permission edit_settings = manager or tenant.admin_access
+    permission delete = manager or tenant.admin_access
+
+    // Permissions that cascade to devices
+    permission device_admin = manager or tenant.admin_access
+    permission device_access = operator or manager or tenant.member_access
+  }
+
+  entity device {
+    // Device belongs to a site
+    relation site @site
+
+    // Device-specific permissions with site inheritance
+    permission configure = site.device_admin
+    permission monitor = site.device_access
+    permission control = site.device_admin
+    permission view_logs = site.device_access
+    permission update_firmware = site.device_admin
+    permission reboot = site.device_admin
+  }
+
+  entity task {
+    // Tasks can be associated with different entities
+    relation tenant @tenant
+    relation site @site
+    relation device @device
+    relation assignee @user
+    relation creator @user
+
+    // Task permissions based on context
+    permission view = creator or assignee or tenant.member_access or site.view
+    permission edit = creator or assignee or tenant.admin_access or site.manage
+    permission delete = creator or tenant.admin_access or site.manage
+    permission assign = tenant.admin_access or site.manage
+  }
+
+relationships:
+  # System admin
+  - system:platform#admin@user:system_admin
+
+  # Sample tenant with users
+  - tenant:acme_corp#system@system:platform
+  - tenant:acme_corp#owner@user:alice
+  - tenant:acme_corp#admin@user:bob
+  - tenant:acme_corp#member@user:charlie
+
+  # Sample site within tenant
+  - site:headquarters#tenant@tenant:acme_corp
+  - site:headquarters#manager@user:bob
+  - site:headquarters#operator@user:david
+
+  # Sample device within site
+  - device:server_001#site@site:headquarters
+
+  # Sample task assignments
+  - task:maintenance_001#tenant@tenant:acme_corp
+  - task:maintenance_001#site@site:headquarters
+  - task:maintenance_001#device@device:server_001
+  - task:maintenance_001#creator@user:bob
+  - task:maintenance_001#assignee@user:david
+
+scenarios:
+  - name: "System Admin Access"
+    description: "System admin should have access to everything"
+    checks:
+      - entity: "tenant:acme_corp"
+        subject: "user:system_admin"
+        assertions:
+          manage: true
+          delete: true
+      - entity: "device:server_001"
+        subject: "user:system_admin"
+        assertions:
+          configure: true
+          monitor: true
+
+  - name: "Tenant Owner Permissions"
+    description: "Tenant owner should manage tenant and cascade to sites/devices"
+    checks:
+      - entity: "tenant:acme_corp"
+        subject: "user:alice"
+        assertions:
+          manage: true
+          invite_users: true
+      - entity: "site:headquarters"
+        subject: "user:alice"
+        assertions:
+          manage: true
+          view: true
+      - entity: "device:server_001"
+        subject: "user:alice"
+        assertions:
+          configure: true
+          monitor: true
+
+  - name: "Site Manager Permissions"
+    description: "Site manager should manage site and devices but not tenant"
+    checks:
+      - entity: "site:headquarters"
+        subject: "user:bob"
+        assertions:
+          manage: true
+          edit_settings: true
+      - entity: "device:server_001"
+        subject: "user:bob"
+        assertions:
+          configure: true
+          reboot: true
+      - entity: "tenant:acme_corp"
+        subject: "user:bob"
+        assertions:
+          manage: true  # Bob is also tenant admin
+          delete: false # But cannot delete tenant
+
+  - name: "Device Operator Permissions"
+    description: "Device operator should monitor but not configure"
+    checks:
+      - entity: "device:server_001"
+        subject: "user:david"
+        assertions:
+          monitor: true
+          view_logs: true
+          configure: false
+          reboot: false
+
+  - name: "Task Permissions"
+    description: "Task permissions based on role and assignment"
+    checks:
+      - entity: "task:maintenance_001"
+        subject: "user:david"
+        assertions:
+          view: true
+          edit: true  # Assigned to David
+      - entity: "task:maintenance_001"
+        subject: "user:charlie"
+        assertions:
+          view: true  # Tenant member
+          edit: false # Not assigned or admin 

@@ -3,40 +3,28 @@ import * as HttpStatusCodes from "stoker/http-status-codes";
 import { jsonContent, jsonContentRequired } from "stoker/openapi/helpers";
 import { createErrorSchema } from "stoker/openapi/schemas";
 
+import {
+  insertSitesSchema,
+  patchSitesSchema,
+  selectSitesSchema,
+} from "../../db/schema";
 import { notFoundSchema } from "../../lib/constants";
 
 const tags = ["Sites"];
 
-// Define site schemas
-const selectSiteSchema = z.object({
-  id: z.string().uuid(),
-  tenantId: z.string().uuid(),
-  name: z.string(),
+// Customize schemas for OpenAPI
+const selectSiteSchema = selectSitesSchema.extend({
   address: z.string().nullable(),
-  coordinates: z.object({
-    latitude: z.number(),
-    longitude: z.number(),
-  }).nullable(),
-  timezone: z.string(),
-  metadata: z.any(),
-  status: z.enum(["active", "inactive", "maintenance"]),
-  createdAt: z.date(),
-  updatedAt: z.date(),
+  city: z.string().nullable(),
+  state: z.string().nullable(),
+  country: z.string().nullable(),
+  postalCode: z.string().nullable(),
+  timezone: z.string().nullable(),
 });
 
-const insertSiteSchema = z.object({
-  name: z.string().min(1).max(255),
-  address: z.string().optional(),
-  coordinates: z.object({
-    latitude: z.number().min(-90).max(90),
-    longitude: z.number().min(-180).max(180),
-  }).optional(),
-  timezone: z.string().default("UTC"),
-  metadata: z.any().optional(),
-  status: z.enum(["active", "inactive", "maintenance"]).optional(),
-});
-
-const patchSiteSchema = insertSiteSchema.partial();
+// No need to override insertSiteSchema as the database schema is appropriate
+const insertSiteSchema = insertSitesSchema;
+const patchSiteSchema = patchSitesSchema;
 
 // GET /tenants/{tenantId}/sites - List sites for a tenant
 export const list = createRoute({

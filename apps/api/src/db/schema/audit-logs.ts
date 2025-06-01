@@ -1,7 +1,8 @@
 import { relations } from "drizzle-orm";
 import { index, inet, json, pgEnum, pgTable, text, timestamp, uuid, varchar } from "drizzle-orm/pg-core";
+import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 
-import { auditActionEnum, id, resourceTypeEnum } from "./common";
+import { auditActionEnum, resourceTypeEnum } from "./common";
 import { tenants } from "./tenants-new";
 import { users } from "./users";
 
@@ -9,28 +10,26 @@ import { users } from "./users";
 export const auditActionEnumPg = pgEnum("audit_action", auditActionEnum);
 export const resourceTypeEnumPg = pgEnum("resource_type", resourceTypeEnum);
 
-// Audit Logs table
+// Audit Logs table - defined without spread operators to work with drizzle-zod
 export const auditLogs = pgTable("audit_logs", {
-  ...id,
+  id: uuid("id").primaryKey().defaultRandom(),
   tenantId: uuid("tenant_id").references(() => tenants.id, { onDelete: "set null" }),
   userId: uuid("user_id").references(() => users.id, { onDelete: "set null" }),
   action: auditActionEnumPg("action").notNull(),
   resourceType: resourceTypeEnumPg("resource_type").notNull(),
-  resourceId: varchar("resource_id", { length: 255 }).notNull(),
-  details: json("details").$type<{
-    before?: Record<string, any>;
-    after?: Record<string, any>;
-    metadata?: Record<string, any>;
+  resourceId: varchar("resource_id", { length: 255 }),
+  metadata: json("metadata").$type<{
+    ipAddress?: string;
+    userAgent?: string;
+    changes?: Record<string, {
+      from: unknown;
+      to: unknown;
+    }>;
     reason?: string;
     affectedUsers?: string[];
-    affectedResources?: Array<{
-      type: string;
-      id: string;
-    }>;
+    duration?: number;
   }>().default({}),
-  ipAddress: inet("ip_address"),
-  userAgent: text("user_agent"),
-  timestamp: timestamp("timestamp", { withTimezone: true }).notNull().defaultNow(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 }, table => ({
   // Indexes for performance
   tenantIdIdx: index("audit_logs_tenant_id_idx").on(table.tenantId),
@@ -61,3 +60,8 @@ export const auditLogsRelations = relations(auditLogs, ({ one }) => ({
 // Type exports
 export type AuditLog = typeof auditLogs.$inferSelect;
 export type NewAuditLog = typeof auditLogs.$inferInsert;
+
+// Zod schemas using drizzle-zod
+export const insertAuditLogsSchema = createInsertSchema(auditLogs);
+export const selectAuditLogsSchema = createSelectSchema(auditLogs);
+export const patchAuditLogsSchema = insertAuditLogsSchema.partial();

@@ -1,14 +1,15 @@
-import { index, json, pgEnum, pgTable, varchar } from "drizzle-orm/pg-core";
+import { index, json, pgEnum, pgTable, timestamp, uuid, varchar } from "drizzle-orm/pg-core";
+import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 
-import { id, tenantStatusEnum, tenantTypeEnum, timestamps } from "./common";
+import { tenantStatusEnum, tenantTypeEnum } from "./common";
 
 // Create enums
 export const tenantTypeEnumPg = pgEnum("tenant_type", tenantTypeEnum);
 export const tenantStatusEnumPg = pgEnum("tenant_status", tenantStatusEnum);
 
-// Tenants table
+// Tenants table - defined without spread operators to work with drizzle-zod
 export const tenants = pgTable("tenants", {
-  ...id,
+  id: uuid("id").primaryKey().defaultRandom(),
   name: varchar("name", { length: 255 }).notNull(),
   slug: varchar("slug", { length: 100 }).notNull().unique(),
   type: tenantTypeEnumPg("type").notNull().default("standard"),
@@ -32,7 +33,13 @@ export const tenants = pgTable("tenants", {
       webhookUrl?: string;
     };
   }>().default({}),
-  ...timestamps,
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .notNull()
+    .defaultNow()
+    .$onUpdate(() => new Date()),
 }, table => ({
   // Indexes for performance
   slugIdx: index("tenants_slug_idx").on(table.slug),
@@ -43,3 +50,12 @@ export const tenants = pgTable("tenants", {
 // Type exports
 export type Tenant = typeof tenants.$inferSelect;
 export type NewTenant = typeof tenants.$inferInsert;
+
+// Zod schemas using drizzle-zod
+export const insertTenantsSchema = createInsertSchema(tenants, {
+  slug: (schema) => schema.regex(/^[a-z0-9-]+$/, "Slug must contain only lowercase letters, numbers, and hyphens"),
+});
+
+export const selectTenantsSchema = createSelectSchema(tenants);
+
+export const patchTenantsSchema = insertTenantsSchema.partial();

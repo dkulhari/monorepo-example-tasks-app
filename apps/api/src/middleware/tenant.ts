@@ -1,3 +1,5 @@
+import type { Context } from "hono";
+
 import { and, eq } from "drizzle-orm";
 import { createMiddleware } from "hono/factory";
 import { HTTPException } from "hono/http-exception";
@@ -69,7 +71,7 @@ export function tenantMiddleware() {
   });
 }
 
-function getTenantIdentifier(c: any): string | null {
+function getTenantIdentifier(c: Context): string | null {
   // Option 1: From path parameter (check both tenantId and tenant) - prioritize this for API routes
   const tenantIdFromPath = c.req.param("tenantId");
   if (tenantIdFromPath) {
@@ -99,12 +101,12 @@ function getTenantIdentifier(c: any): string | null {
   return null;
 }
 
-export function getTenant(c: any): typeof tenants.$inferSelect {
+export function getTenant(c: Context): typeof tenants.$inferSelect {
   const tenant = c.get("tenant");
   return tenant;
 }
 
-export function getUserRole(c: any): string {
+export function getUserRole(c: Context): string {
   return c.get("userRole");
 }
 

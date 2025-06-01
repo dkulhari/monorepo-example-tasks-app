@@ -3,32 +3,30 @@ import * as HttpStatusCodes from "stoker/http-status-codes";
 import { jsonContent, jsonContentRequired } from "stoker/openapi/helpers";
 import { createErrorSchema } from "stoker/openapi/schemas";
 
+import {
+  insertDevicesSchema,
+  patchDevicesSchema,
+  selectDevicesSchema,
+} from "../../db/schema";
 import { notFoundSchema } from "../../lib/constants";
 
 const tags = ["Devices"];
 
-// Define device schemas
-const selectDeviceSchema = z.object({
-  id: z.string().uuid(),
-  siteId: z.string().uuid(),
-  name: z.string(),
-  type: z.string(),
-  serialNumber: z.string(),
-  metadata: z.any(),
-  status: z.enum(["active", "inactive", "maintenance", "offline"]),
-  createdAt: z.date(),
-  updatedAt: z.date(),
+// Customize schemas for OpenAPI - make optional fields nullable for display
+const selectDeviceSchema = selectDevicesSchema.extend({
+  manufacturer: z.string().nullable(),
+  model: z.string().nullable(),
+  serialNumber: z.string().nullable(),
+  lastSeenAt: z.coerce.date().nullable(),
 });
 
-const insertDeviceSchema = z.object({
+// For insert, require some fields that are optional in the database
+const insertDeviceSchema = insertDevicesSchema.extend({
   name: z.string().min(1).max(255),
   type: z.string().min(1).max(100),
-  serialNumber: z.string().min(1).max(255),
-  metadata: z.any().optional(),
-  status: z.enum(["active", "inactive", "maintenance", "offline"]).optional(),
 });
 
-const patchDeviceSchema = insertDeviceSchema.partial();
+const patchDeviceSchema = patchDevicesSchema;
 
 // GET /tenants/{tenantId}/sites/{siteId}/devices - List devices for a site
 export const list = createRoute({

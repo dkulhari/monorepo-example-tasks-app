@@ -12,7 +12,7 @@ import { requireUser } from "../../middleware/keycloak";
 import { getTenant } from "../../middleware/tenant";
 
 // GET /tenants/{tenantId}/sites/{siteId}/devices - List devices for a site
-export const list: AppRouteHandler<routes.ListRoute> = async (c): Promise<any> => {
+export const list: AppRouteHandler<typeof routes.list> = async (c) => {
   requireUser(c);
   const tenant = getTenant(c);
   const { tenantId, siteId } = c.req.valid("param");
@@ -49,7 +49,7 @@ export const list: AppRouteHandler<routes.ListRoute> = async (c): Promise<any> =
 };
 
 // POST /tenants/{tenantId}/sites/{siteId}/devices - Create a new device
-export const create: AppRouteHandler<routes.CreateRoute> = async (c) => {
+export const create: AppRouteHandler<typeof routes.create> = async (c) => {
   requireUser(c);
   const tenant = getTenant(c);
   const { tenantId, siteId } = c.req.valid("param");
@@ -100,7 +100,7 @@ export const create: AppRouteHandler<routes.CreateRoute> = async (c) => {
 };
 
 // GET /tenants/{tenantId}/sites/{siteId}/devices/{id} - Get device details
-export const getOne: AppRouteHandler<routes.GetOneRoute> = async (c): Promise<any> => {
+export const getOne: AppRouteHandler<typeof routes.getOne> = async (c) => {
   requireUser(c);
   const tenant = getTenant(c);
   const { tenantId, siteId, id } = c.req.valid("param");
@@ -146,7 +146,7 @@ export const getOne: AppRouteHandler<routes.GetOneRoute> = async (c): Promise<an
 };
 
 // PATCH /tenants/{tenantId}/sites/{siteId}/devices/{id} - Update device
-export const patch: AppRouteHandler<routes.PatchRoute> = async (c): Promise<any> => {
+export const patch: AppRouteHandler<typeof routes.patch> = async (c) => {
   requireUser(c);
   const tenant = getTenant(c);
   const { tenantId, siteId, id } = c.req.valid("param");
@@ -217,7 +217,7 @@ export const patch: AppRouteHandler<routes.PatchRoute> = async (c): Promise<any>
 };
 
 // DELETE /tenants/{tenantId}/sites/{siteId}/devices/{id} - Delete device
-export const remove: AppRouteHandler<routes.RemoveRoute> = async (c) => {
+export const remove: AppRouteHandler<typeof routes.remove> = async (c) => {
   requireUser(c);
   const tenant = getTenant(c);
   const { tenantId, siteId, id } = c.req.valid("param");

@@ -101,7 +101,7 @@ importers:
         version: 4.19.4
       typescript:
         specifier: ^5.7.2
-        version: 5.8.3
+        version: 5.7.3
       vitest:
         specifier: ^2.1.8
         version: 2.1.9(@types/node@22.15.29)(lightningcss@1.30.1)

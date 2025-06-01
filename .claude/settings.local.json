@@ -16,7 +16,9 @@
       "Bash(pnpm --filter api dev)",
       "Bash(pnpm --filter api-client build)",
       "Bash(pnpm --filter api lint)",
-      "Bash(pnpm --filter api lint:fix)"
+      "Bash(pnpm --filter api lint:fix)",
+      "Bash(pnpm:*)",
+      "WebFetch(domain:orm.drizzle.team)"
     ],
     "deny": []
   }

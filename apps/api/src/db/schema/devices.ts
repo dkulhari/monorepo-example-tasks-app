@@ -1,49 +1,50 @@
 import { relations } from "drizzle-orm";
-import { index, json, pgEnum, pgTable, unique, uuid, varchar } from "drizzle-orm/pg-core";
+import { index, json, pgEnum, pgTable, timestamp, unique, uuid, varchar } from "drizzle-orm/pg-core";
+import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 
-import { deviceStatusEnum, id, timestamps } from "./common";
+import { deviceStatusEnum } from "./common";
 import { sites } from "./sites";
 
 // Create enum
 export const deviceStatusEnumPg = pgEnum("device_status", deviceStatusEnum);
 
-// Devices table
+// Devices table - defined without spread operators to work with drizzle-zod
 export const devices = pgTable("devices", {
-  ...id,
+  id: uuid("id").primaryKey().defaultRandom(),
   siteId: uuid("site_id").notNull().references(() => sites.id, { onDelete: "cascade" }),
   name: varchar("name", { length: 255 }).notNull(),
   type: varchar("type", { length: 100 }).notNull(),
-  serialNumber: varchar("serial_number", { length: 255 }).notNull(),
+  manufacturer: varchar("manufacturer", { length: 100 }),
+  model: varchar("model", { length: 100 }),
+  serialNumber: varchar("serial_number", { length: 255 }),
+  status: deviceStatusEnumPg("status").notNull().default("active"),
+  lastSeenAt: timestamp("last_seen_at", { withTimezone: true }),
   metadata: json("metadata").$type<{
-    manufacturer?: string;
-    model?: string;
     firmwareVersion?: string;
     hardwareVersion?: string;
-    installationDate?: string;
-    lastMaintenanceDate?: string;
-    nextMaintenanceDate?: string;
+    ipAddress?: string;
+    macAddress?: string;
     configuration?: Record<string, any>;
-    capabilities?: string[];
-    location?: {
-      building?: string;
-      floor?: string;
-      room?: string;
-      coordinates?: {
-        x: number;
-        y: number;
-        z?: number;
-      };
+    telemetry?: {
+      temperature?: number;
+      humidity?: number;
+      batteryLevel?: number;
+      signalStrength?: number;
+      uptime?: number;
     };
-    connectivity?: {
-      ipAddress?: string;
-      macAddress?: string;
-      protocol?: string;
-      port?: number;
+    maintenanceSchedule?: {
+      lastMaintenance?: string;
+      nextMaintenance?: string;
+      maintenanceInterval?: number;
     };
-    customFields?: Record<string, any>;
   }>().default({}),
-  status: deviceStatusEnumPg("status").notNull().default("active"),
-  ...timestamps,
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .notNull()
+    .defaultNow()
+    .$onUpdate(() => new Date()),
 }, table => ({
   // Unique constraint on serial number
   serialNumberUnique: unique("devices_serial_number_unique").on(table.serialNumber),
@@ -68,3 +69,8 @@ export const devicesRelations = relations(devices, ({ one }) => ({
 // Type exports
 export type Device = typeof devices.$inferSelect;
 export type NewDevice = typeof devices.$inferInsert;
+
+// Zod schemas using drizzle-zod
+export const insertDevicesSchema = createInsertSchema(devices);
+export const selectDevicesSchema = createSelectSchema(devices);
+export const patchDevicesSchema = insertDevicesSchema.partial();

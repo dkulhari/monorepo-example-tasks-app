@@ -3,31 +3,10 @@ import * as HttpStatusCodes from "stoker/http-status-codes";
 import { jsonContent, jsonContentRequired } from "stoker/openapi/helpers";
 import { createErrorSchema } from "stoker/openapi/schemas";
 
+import { insertUsersSchema, patchUsersSchema, selectUsersSchema } from "../../db/schema";
 import { notFoundSchema } from "../../lib/constants";
 
 const tags = ["Users"];
-
-// Define user schemas
-const selectUserSchema = z.object({
-  id: z.string().uuid(),
-  keycloakId: z.string(),
-  email: z.string().email(),
-  name: z.string(),
-  userType: z.enum(["system_admin", "regular", "service_account", "guest"]),
-  metadata: z.any(),
-  createdAt: z.date(),
-  updatedAt: z.date(),
-});
-
-const insertUserSchema = z.object({
-  keycloakId: z.string().min(1),
-  email: z.string().email(),
-  name: z.string().min(1).max(255),
-  userType: z.enum(["system_admin", "regular", "service_account", "guest"]).optional(),
-  metadata: z.any().optional(),
-});
-
-const patchUserSchema = insertUserSchema.partial();
 
 // GET /users - List all users (system admin only)
 export const list = createRoute({
@@ -39,7 +18,7 @@ export const list = createRoute({
   security: [{ Bearer: [] }],
   responses: {
     [HttpStatusCodes.OK]: jsonContent(
-      z.array(selectUserSchema),
+      z.array(selectUsersSchema),
       "Complete list of system users",
     ),
     [HttpStatusCodes.FORBIDDEN]: jsonContent(
@@ -55,7 +34,7 @@ export const create = createRoute({
   method: "post",
   request: {
     body: jsonContentRequired(
-      insertUserSchema,
+      insertUsersSchema,
       "The user to create",
     ),
   },
@@ -65,7 +44,7 @@ export const create = createRoute({
   security: [{ Bearer: [] }],
   responses: {
     [HttpStatusCodes.CREATED]: jsonContent(
-      selectUserSchema,
+      selectUsersSchema,
       "The newly created user",
     ),
     [HttpStatusCodes.CONFLICT]: jsonContent(
@@ -77,7 +56,7 @@ export const create = createRoute({
       "System administrator access required",
     ),
     [HttpStatusCodes.UNPROCESSABLE_ENTITY]: jsonContent(
-      createErrorSchema(insertUserSchema),
+      createErrorSchema(insertUsersSchema),
       "Validation error",
     ),
   },
@@ -98,7 +77,7 @@ export const getOne = createRoute({
   security: [{ Bearer: [] }],
   responses: {
     [HttpStatusCodes.OK]: jsonContent(
-      selectUserSchema,
+      selectUsersSchema,
       "The requested user profile",
     ),
     [HttpStatusCodes.NOT_FOUND]: jsonContent(
@@ -121,7 +100,7 @@ export const patch = createRoute({
       id: z.string().uuid(),
     }),
     body: jsonContentRequired(
-      patchUserSchema,
+      patchUsersSchema,
       "The user updates",
     ),
   },
@@ -131,7 +110,7 @@ export const patch = createRoute({
   security: [{ Bearer: [] }],
   responses: {
     [HttpStatusCodes.OK]: jsonContent(
-      selectUserSchema,
+      selectUsersSchema,
       "The updated user profile",
     ),
     [HttpStatusCodes.NOT_FOUND]: jsonContent(
@@ -143,7 +122,7 @@ export const patch = createRoute({
       "Access denied - can only update own profile unless system admin",
     ),
     [HttpStatusCodes.UNPROCESSABLE_ENTITY]: jsonContent(
-      createErrorSchema(patchUserSchema),
+      createErrorSchema(patchUsersSchema),
       "Validation error",
     ),
   },
@@ -187,7 +166,7 @@ export const me = createRoute({
   security: [{ Bearer: [] }],
   responses: {
     [HttpStatusCodes.OK]: jsonContent(
-      selectUserSchema,
+      selectUsersSchema,
       "The authenticated user's profile",
     ),
   },

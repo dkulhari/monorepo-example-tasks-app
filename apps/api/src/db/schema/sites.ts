@@ -1,44 +1,51 @@
 import { relations } from "drizzle-orm";
-import { index, json, pgEnum, pgTable, text, uuid, varchar } from "drizzle-orm/pg-core";
+import { index, json, pgEnum, pgTable, text, timestamp, uuid, varchar } from "drizzle-orm/pg-core";
+import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 
-import { id, siteStatusEnum, timestamps } from "./common";
+import { siteStatusEnum } from "./common";
 import { tenants } from "./tenants-new";
 
 // Create enum
 export const siteStatusEnumPg = pgEnum("site_status", siteStatusEnum);
 
-// Sites table
+// Sites table - defined without spread operators to work with drizzle-zod
 export const sites = pgTable("sites", {
-  ...id,
+  id: uuid("id").primaryKey().defaultRandom(),
   tenantId: uuid("tenant_id").notNull().references(() => tenants.id, { onDelete: "cascade" }),
   name: varchar("name", { length: 255 }).notNull(),
   address: text("address"),
-  coordinates: json("coordinates").$type<{
-    latitude: number;
-    longitude: number;
-  }>(),
-  timezone: varchar("timezone", { length: 50 }).notNull().default("UTC"),
-  metadata: json("metadata").$type<{
-    type?: string;
-    size?: number;
-    operatingHours?: {
-      monday?: { open: string; close: string };
-      tuesday?: { open: string; close: string };
-      wednesday?: { open: string; close: string };
-      thursday?: { open: string; close: string };
-      friday?: { open: string; close: string };
-      saturday?: { open: string; close: string };
-      sunday?: { open: string; close: string };
-    };
-    contactInfo?: {
-      phone?: string;
-      email?: string;
-      emergencyContact?: string;
-    };
-    customFields?: Record<string, any>;
-  }>().default({}),
+  city: varchar("city", { length: 100 }),
+  state: varchar("state", { length: 100 }),
+  country: varchar("country", { length: 100 }),
+  postalCode: varchar("postal_code", { length: 20 }),
+  timezone: varchar("timezone", { length: 50 }).default("UTC"),
   status: siteStatusEnumPg("status").notNull().default("active"),
-  ...timestamps,
+  metadata: json("metadata").$type<{
+    coordinates?: {
+      latitude: number;
+      longitude: number;
+    };
+    operatingHours?: Array<{
+      day: string;
+      open: string;
+      close: string;
+    }>;
+    contacts?: Array<{
+      name: string;
+      role: string;
+      email?: string;
+      phone?: string;
+    }>;
+    features?: string[];
+    capacity?: number;
+  }>().default({}),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .notNull()
+    .defaultNow()
+    .$onUpdate(() => new Date()),
 }, table => ({
   // Indexes for performance
   tenantIdIdx: index("sites_tenant_id_idx").on(table.tenantId),
@@ -59,3 +66,8 @@ export const sitesRelations = relations(sites, ({ one }) => ({
 // Type exports
 export type Site = typeof sites.$inferSelect;
 export type NewSite = typeof sites.$inferInsert;
+
+// Zod schemas using drizzle-zod
+export const insertSitesSchema = createInsertSchema(sites);
+export const selectSitesSchema = createSelectSchema(sites);
+export const patchSitesSchema = insertSitesSchema.partial();

@@ -1,7 +1,8 @@
 import { relations } from "drizzle-orm";
 import { index, pgEnum, pgTable, timestamp, unique, uuid } from "drizzle-orm/pg-core";
+import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 
-import { id, roleEnum, timestamps, userTenantStatusEnum } from "./common";
+import { roleEnum, userTenantStatusEnum } from "./common";
 import { tenants } from "./tenants-new";
 import { users } from "./users";
 
@@ -9,18 +10,24 @@ import { users } from "./users";
 export const userTenantStatusEnumPg = pgEnum("user_tenant_status", userTenantStatusEnum);
 export const roleEnumPg = pgEnum("role", roleEnum);
 
-// User-Tenant Associations table
+// User-Tenant Associations table - defined without spread operators to work with drizzle-zod
 export const userTenantAssociations = pgTable("user_tenant_associations", {
-  ...id,
-  userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  id: uuid("id").primaryKey().defaultRandom(),
   tenantId: uuid("tenant_id").notNull().references(() => tenants.id, { onDelete: "cascade" }),
+  userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
   role: roleEnumPg("role").notNull().default("member"),
   status: userTenantStatusEnumPg("status").notNull().default("invited"),
   invitedAt: timestamp("invited_at", { withTimezone: true }),
   acceptedAt: timestamp("accepted_at", { withTimezone: true }),
   invitedBy: uuid("invited_by").references(() => users.id),
   lastActiveAt: timestamp("last_active_at", { withTimezone: true }),
-  ...timestamps,
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .notNull()
+    .defaultNow()
+    .$onUpdate(() => new Date()),
 }, table => ({
   // Composite unique constraint
   userTenantUnique: unique("user_tenant_unique").on(table.userId, table.tenantId),
@@ -54,3 +61,8 @@ export const userTenantAssociationsRelations = relations(userTenantAssociations,
 // Type exports
 export type UserTenantAssociation = typeof userTenantAssociations.$inferSelect;
 export type NewUserTenantAssociation = typeof userTenantAssociations.$inferInsert;
+
+// Zod schemas using drizzle-zod
+export const insertUserTenantAssociationsSchema = createInsertSchema(userTenantAssociations);
+export const selectUserTenantAssociationsSchema = createSelectSchema(userTenantAssociations);
+export const patchUserTenantAssociationsSchema = insertUserTenantAssociationsSchema.partial();

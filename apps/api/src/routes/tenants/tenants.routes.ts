@@ -3,68 +3,39 @@ import * as HttpStatusCodes from "stoker/http-status-codes";
 import { jsonContent, jsonContentRequired } from "stoker/openapi/helpers";
 import { createErrorSchema, IdParamsSchema } from "stoker/openapi/schemas";
 
+import {
+  insertTenantInvitationsSchema,
+  insertTenantsSchema,
+  patchTenantsSchema,
+  selectTenantsSchema,
+  selectUserTenantAssociationsSchema,
+} from "../../db/schema";
 import { notFoundSchema } from "../../lib/constants";
 
-// Define tenant schemas
-const selectTenantSchema = z.object({
-  id: z.string().uuid(),
-  name: z.string(),
-  slug: z.string(),
-  type: z.enum(["enterprise", "standard", "trial", "demo"]),
-  status: z.enum(["active", "suspended", "inactive"]),
-  keycloakGroupId: z.string().nullable(),
-  settings: z.object({
-    features: z.object({
-      maxUsers: z.number().optional(),
-      maxSites: z.number().optional(),
-      maxDevices: z.number().optional(),
-      enabledModules: z.array(z.string()).optional(),
-    }).optional(),
-    branding: z.object({
-      logo: z.string().optional(),
-      primaryColor: z.string().optional(),
-      secondaryColor: z.string().optional(),
-    }).optional(),
-    notifications: z.object({
-      emailEnabled: z.boolean().optional(),
-      smsEnabled: z.boolean().optional(),
-      webhookUrl: z.string().optional(),
-    }).optional(),
-  }),
-  createdAt: z.date(),
-  updatedAt: z.date(),
-});
-
-const insertTenantSchema = z.object({
-  name: z.string().min(1).max(255),
+// Add regex validation for slug
+const insertTenantSchema = insertTenantsSchema.extend({
   slug: z.string().min(1).max(100).regex(/^[a-z0-9-]+$/, "Slug must contain only lowercase letters, numbers, and hyphens"),
-  type: z.enum(["enterprise", "standard", "trial", "demo"]).optional(),
-  status: z.enum(["active", "suspended", "inactive"]).optional(),
-  keycloakGroupId: z.string().optional(),
-  settings: z.any().optional(),
 });
 
-const patchTenantSchema = insertTenantSchema.partial();
+const patchTenantSchema = patchTenantsSchema;
 
-// User-Tenant Association schema
-const selectTenantUserSchema = z.object({
-  id: z.string().uuid(),
-  userId: z.string().uuid(),
-  tenantId: z.string().uuid(),
-  role: z.enum(["owner", "admin", "member", "viewer"]),
-  status: z.enum(["active", "invited", "suspended"]),
-  invitedAt: z.date().nullable(),
-  acceptedAt: z.date().nullable(),
-  invitedBy: z.string().uuid().nullable(),
-  lastActiveAt: z.date().nullable(),
-  createdAt: z.date(),
-  updatedAt: z.date(),
+// Nullable fields for OpenAPI display
+const selectTenantSchema = selectTenantsSchema.extend({
+  keycloakGroupId: z.string().nullable(),
 });
 
-// Tenant Invitation schema
-const insertTenantInvitationSchema = z.object({
-  email: z.string().email(),
-  role: z.enum(["owner", "admin", "member", "viewer"]).optional(),
+// For tenant user listing
+const selectTenantUserSchema = selectUserTenantAssociationsSchema.extend({
+  invitedAt: z.coerce.date().nullable(),
+  acceptedAt: z.coerce.date().nullable(),
+  invitedBy: z.string().nullable(),
+  lastActiveAt: z.coerce.date().nullable(),
+});
+
+// Tenant Invitation schema - only need email and role for request
+const insertTenantInvitationSchema = insertTenantInvitationsSchema.pick({
+  email: true,
+  role: true,
 });
 
 const tags = ["Tenants"];

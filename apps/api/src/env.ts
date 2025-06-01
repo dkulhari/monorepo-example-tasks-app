@@ -5,7 +5,7 @@ import { z } from "zod";
 expand(config());
 
 export const envSchema = z.object({
-  PORT: z.coerce.number().default(4001),
+  PORT: z.coerce.number(),
   LOG_LEVEL: z.enum(["fatal", "error", "warn", "info", "debug", "trace"]),
   NODE_ENV: z.enum(["development", "production"]),
   // Database configuration

@@ -1,12 +1,33 @@
 import { createRoute, z } from "@hono/zod-openapi";
 import * as HttpStatusCodes from "stoker/http-status-codes";
 import { jsonContent, jsonContentRequired } from "stoker/openapi/helpers";
-import { createErrorSchema } from "stoker/openapi/schemas";
-
-import { insertUsersSchema, patchUsersSchema, selectUsersSchema } from "../../db/schema";
 import { notFoundSchema } from "../../lib/constants";
 
 const tags = ["Users"];
+
+// Manual schemas to avoid drizzle-zod OpenAPI issues
+const selectUsersSchema = z.object({
+  id: z.string().uuid(),
+  keycloakId: z.string(),
+  email: z.string().email(),
+  name: z.string(),
+  createdBy: z.string().uuid().nullable(),
+  userType: z.enum(["system_admin", "regular", "service_account", "guest"]),
+  metadata: z.object({}).nullable(),
+  createdAt: z.string().datetime(),
+  updatedAt: z.string().datetime(),
+});
+
+const insertUsersSchema = z.object({
+  keycloakId: z.string().max(255),
+  email: z.string().email().max(255),
+  name: z.string().min(1).max(255),
+  createdBy: z.string().uuid().optional(),
+  userType: z.enum(["system_admin", "regular", "service_account", "guest"]).optional(),
+  metadata: z.object({}).optional(),
+});
+
+const patchUsersSchema = insertUsersSchema.partial();
 
 // GET /users - List all users (system admin only)
 export const list = createRoute({
@@ -56,7 +77,7 @@ export const create = createRoute({
       "System administrator access required",
     ),
     [HttpStatusCodes.UNPROCESSABLE_ENTITY]: jsonContent(
-      createErrorSchema(insertUsersSchema),
+      z.object({ message: z.string() }),
       "Validation error",
     ),
   },
@@ -122,7 +143,7 @@ export const patch = createRoute({
       "Access denied - can only update own profile unless system admin",
     ),
     [HttpStatusCodes.UNPROCESSABLE_ENTITY]: jsonContent(
-      createErrorSchema(patchUsersSchema),
+      z.object({ message: z.string() }),
       "Validation error",
     ),
   },

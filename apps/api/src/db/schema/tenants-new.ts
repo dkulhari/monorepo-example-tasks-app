@@ -52,9 +52,7 @@ export type Tenant = typeof tenants.$inferSelect;
 export type NewTenant = typeof tenants.$inferInsert;
 
 // Zod schemas using drizzle-zod
-export const insertTenantsSchema = createInsertSchema(tenants, {
-  slug: (schema) => schema.regex(/^[a-z0-9-]+$/, "Slug must contain only lowercase letters, numbers, and hyphens"),
-});
+export const insertTenantsSchema = createInsertSchema(tenants);
 
 export const selectTenantsSchema = createSelectSchema(tenants);
 

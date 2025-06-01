@@ -1,5 +1,4 @@
-import { AnyPgColumn, PgTableWithColumns, TableConfig, pgTable } from "drizzle-orm/pg-core";
-import { timestamp, uuid } from "drizzle-orm/pg-core";
+import { type AnyPgColumn, pgTable, timestamp, uuid } from "drizzle-orm/pg-core";
 
 // Define types for our common columns
 export type WithId = {
@@ -17,9 +16,7 @@ export function createTableWithDefaults<T extends Record<string, AnyPgColumn>>(
   columns: T,
   includeId = true,
   includeTimestamps = true
-): PgTableWithColumns<TableConfig<
-  T & (typeof includeId extends true ? WithId : {}) & (typeof includeTimestamps extends true ? WithTimestamps : {})
->> {
+) {
   const tableColumns: any = { ...columns };
 
   if (includeId) {
@@ -36,5 +33,5 @@ export function createTableWithDefaults<T extends Record<string, AnyPgColumn>>(
       .$onUpdate(() => new Date());
   }
 
-  return pgTable(name, tableColumns) as any;
+  return pgTable(name, tableColumns);
 }

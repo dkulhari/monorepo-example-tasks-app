@@ -1,30 +1,40 @@
 import { createRoute, z } from "@hono/zod-openapi";
 import * as HttpStatusCodes from "stoker/http-status-codes";
 import { jsonContent, jsonContentRequired } from "stoker/openapi/helpers";
-import { createErrorSchema } from "stoker/openapi/schemas";
-
-import {
-  insertSitesSchema,
-  patchSitesSchema,
-  selectSitesSchema,
-} from "../../db/schema";
 import { notFoundSchema } from "../../lib/constants";
 
 const tags = ["Sites"];
 
-// Customize schemas for OpenAPI
-const selectSiteSchema = selectSitesSchema.extend({
+// Manual schemas to avoid drizzle-zod OpenAPI issues
+const selectSiteSchema = z.object({
+  id: z.string().uuid(),
+  tenantId: z.string().uuid(),
+  name: z.string(),
   address: z.string().nullable(),
   city: z.string().nullable(),
   state: z.string().nullable(),
   country: z.string().nullable(),
   postalCode: z.string().nullable(),
   timezone: z.string().nullable(),
+  status: z.enum(["active", "inactive", "maintenance"]),
+  metadata: z.object({}).nullable(),
+  createdAt: z.string().datetime(),
+  updatedAt: z.string().datetime(),
 });
 
-// No need to override insertSiteSchema as the database schema is appropriate
-const insertSiteSchema = insertSitesSchema;
-const patchSiteSchema = patchSitesSchema;
+const insertSiteSchema = z.object({
+  name: z.string().min(1).max(255),
+  address: z.string().optional(),
+  city: z.string().max(100).optional(),
+  state: z.string().max(100).optional(),
+  country: z.string().max(100).optional(),
+  postalCode: z.string().max(20).optional(),
+  timezone: z.string().max(50).optional(),
+  status: z.enum(["active", "inactive", "maintenance"]).optional(),
+  metadata: z.object({}).optional(),
+});
+
+const patchSiteSchema = insertSiteSchema.partial();
 
 // GET /tenants/{tenantId}/sites - List sites for a tenant
 export const list = createRoute({
@@ -78,7 +88,7 @@ export const create = createRoute({
       "Insufficient permissions - owner or admin role required",
     ),
     [HttpStatusCodes.UNPROCESSABLE_ENTITY]: jsonContent(
-      createErrorSchema(insertSiteSchema),
+      z.object({ message: z.string() }),
       "Validation error",
     ),
   },
@@ -146,7 +156,7 @@ export const patch = createRoute({
       "Insufficient permissions - owner or admin role required",
     ),
     [HttpStatusCodes.UNPROCESSABLE_ENTITY]: jsonContent(
-      createErrorSchema(patchSiteSchema),
+      z.object({ message: z.string() }),
       "Validation error",
     ),
   },

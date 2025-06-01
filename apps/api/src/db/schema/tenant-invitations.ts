@@ -1,4 +1,4 @@
-import { boolean, index, pgTable, timestamp, unique, uuid, varchar } from "drizzle-orm/pg-core";
+import { index, pgTable, timestamp, unique, uuid, varchar } from "drizzle-orm/pg-core";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 
 import { tenants } from "./tenants-new";
@@ -32,9 +32,9 @@ export const tenantInvitations = pgTable("tenant_invitations", {
   tenantIdIdx: index("invitations_tenant_id_idx").on(table.tenantId),
   tokenIdx: index("invitations_token_idx").on(table.token),
   expiresAtIdx: index("invitations_expires_at_idx").on(table.expiresAt),
-  acceptedIdx: index("invitations_accepted_idx").on(table.accepted),
+  acceptedIdx: index("invitations_accepted_idx").on(table.acceptedAt),
   // Composite indexes
-  tenantAcceptedIdx: index("invitations_tenant_accepted_idx").on(table.tenantId, table.accepted),
+  tenantAcceptedIdx: index("invitations_tenant_accepted_idx").on(table.tenantId, table.acceptedAt),
 }));
 
 // Type exports

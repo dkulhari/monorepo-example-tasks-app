@@ -1,32 +1,38 @@
 import { createRoute, z } from "@hono/zod-openapi";
 import * as HttpStatusCodes from "stoker/http-status-codes";
 import { jsonContent, jsonContentRequired } from "stoker/openapi/helpers";
-import { createErrorSchema } from "stoker/openapi/schemas";
 
-import {
-  insertDevicesSchema,
-  patchDevicesSchema,
-  selectDevicesSchema,
-} from "../../db/schema";
 import { notFoundSchema } from "../../lib/constants";
 
 const tags = ["Devices"];
 
-// Customize schemas for OpenAPI - make optional fields nullable for display
-const selectDeviceSchema = selectDevicesSchema.extend({
+// Define schemas manually to avoid drizzle-zod OpenAPI issues
+const selectDeviceSchema = z.object({
+  id: z.string().uuid(),
+  siteId: z.string().uuid(),
+  name: z.string(),
+  type: z.string(),
   manufacturer: z.string().nullable(),
   model: z.string().nullable(),
   serialNumber: z.string().nullable(),
-  lastSeenAt: z.coerce.date().nullable(),
+  status: z.enum(["active", "inactive", "maintenance", "offline"]),
+  lastSeenAt: z.string().datetime().nullable(),
+  metadata: z.object({}).nullable(),
+  createdAt: z.string().datetime(),
+  updatedAt: z.string().datetime(),
 });
 
-// For insert, require some fields that are optional in the database
-const insertDeviceSchema = insertDevicesSchema.extend({
+const insertDeviceSchema = z.object({
   name: z.string().min(1).max(255),
   type: z.string().min(1).max(100),
+  manufacturer: z.string().max(100).optional(),
+  model: z.string().max(100).optional(),
+  serialNumber: z.string().max(255).optional(),
+  status: z.enum(["active", "inactive", "maintenance", "offline"]).optional(),
+  metadata: z.object({}).optional(),
 });
 
-const patchDeviceSchema = patchDevicesSchema;
+const patchDeviceSchema = insertDeviceSchema.partial();
 
 // GET /tenants/{tenantId}/sites/{siteId}/devices - List devices for a site
 export const list = createRoute({
@@ -94,7 +100,7 @@ export const create = createRoute({
       "Insufficient permissions - owner or admin role required",
     ),
     [HttpStatusCodes.UNPROCESSABLE_ENTITY]: jsonContent(
-      createErrorSchema(insertDeviceSchema),
+      z.object({ message: z.string() }),
       "Validation error",
     ),
   },
@@ -164,7 +170,7 @@ export const patch = createRoute({
       "Insufficient permissions - owner or admin role required",
     ),
     [HttpStatusCodes.UNPROCESSABLE_ENTITY]: jsonContent(
-      createErrorSchema(patchDeviceSchema),
+      z.object({ message: z.string() }),
       "Validation error",
     ),
   },

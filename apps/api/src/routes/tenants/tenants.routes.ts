@@ -1,41 +1,50 @@
 import { createRoute, z } from "@hono/zod-openapi";
 import * as HttpStatusCodes from "stoker/http-status-codes";
 import { jsonContent, jsonContentRequired } from "stoker/openapi/helpers";
-import { createErrorSchema, IdParamsSchema } from "stoker/openapi/schemas";
+import { IdParamsSchema } from "stoker/openapi/schemas";
 
-import {
-  insertTenantInvitationsSchema,
-  insertTenantsSchema,
-  patchTenantsSchema,
-  selectTenantsSchema,
-  selectUserTenantAssociationsSchema,
-} from "../../db/schema";
 import { notFoundSchema } from "../../lib/constants";
 
-// Add regex validation for slug
-const insertTenantSchema = insertTenantsSchema.extend({
-  slug: z.string().min(1).max(100).regex(/^[a-z0-9-]+$/, "Slug must contain only lowercase letters, numbers, and hyphens"),
-});
-
-const patchTenantSchema = patchTenantsSchema;
-
-// Nullable fields for OpenAPI display
-const selectTenantSchema = selectTenantsSchema.extend({
+// Manual schemas to avoid drizzle-zod OpenAPI issues
+const selectTenantSchema = z.object({
+  id: z.string().uuid(),
+  name: z.string(),
+  slug: z.string(),
+  type: z.enum(["enterprise", "standard", "trial", "demo"]),
+  status: z.enum(["active", "suspended", "inactive"]),
   keycloakGroupId: z.string().nullable(),
+  settings: z.object({}).nullable(),
+  createdAt: z.string().datetime(),
+  updatedAt: z.string().datetime(),
 });
+
+const insertTenantSchema = z.object({
+  name: z.string().min(1).max(255),
+  slug: z.string().min(1).max(100).regex(/^[a-z0-9-]+$/, "Slug must contain only lowercase letters, numbers, and hyphens"),
+  type: z.enum(["enterprise", "standard", "trial", "demo"]).optional(),
+  keycloakGroupId: z.string().max(255).optional(),
+  settings: z.object({}).optional(),
+});
+
+const patchTenantSchema = insertTenantSchema.partial();
 
 // For tenant user listing
-const selectTenantUserSchema = selectUserTenantAssociationsSchema.extend({
-  invitedAt: z.coerce.date().nullable(),
-  acceptedAt: z.coerce.date().nullable(),
-  invitedBy: z.string().nullable(),
-  lastActiveAt: z.coerce.date().nullable(),
+const selectTenantUserSchema = z.object({
+  id: z.string().uuid(),
+  tenantId: z.string().uuid(),
+  userId: z.string().uuid(),
+  role: z.enum(["owner", "admin", "member", "viewer"]),
+  status: z.enum(["active", "invited", "suspended"]),
+  invitedBy: z.string().uuid().nullable(),
+  invitedAt: z.string().datetime().nullable(),
+  acceptedAt: z.string().datetime().nullable(),
+  lastActiveAt: z.string().datetime().nullable(),
 });
 
 // Tenant Invitation schema - only need email and role for request
-const insertTenantInvitationSchema = insertTenantInvitationsSchema.pick({
-  email: true,
-  role: true,
+const insertTenantInvitationSchema = z.object({
+  email: z.string().email().max(255),
+  role: z.enum(["owner", "admin", "member", "viewer"]),
 });
 
 const tags = ["Tenants"];
@@ -80,7 +89,7 @@ export const create = createRoute({
       "The created tenant with the user as owner",
     ),
     [HttpStatusCodes.UNPROCESSABLE_ENTITY]: jsonContent(
-      createErrorSchema(insertTenantSchema),
+      z.object({ message: z.string() }),
       "Validation error - check slug uniqueness and field requirements",
     ),
     [HttpStatusCodes.CONFLICT]: jsonContent(
@@ -146,7 +155,7 @@ export const patch = createRoute({
       "Insufficient permissions - owner or admin role required",
     ),
     [HttpStatusCodes.UNPROCESSABLE_ENTITY]: jsonContent(
-      createErrorSchema(patchTenantSchema),
+      z.object({ message: z.string() }),
       "Validation error",
     ),
   },

@@ -1,5 +1,5 @@
 import { relations } from "drizzle-orm";
-import { index, inet, json, pgEnum, pgTable, text, timestamp, uuid, varchar } from "drizzle-orm/pg-core";
+import { index, json, pgEnum, pgTable, timestamp, uuid, varchar } from "drizzle-orm/pg-core";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 
 import { auditActionEnum, resourceTypeEnum } from "./common";
@@ -37,10 +37,10 @@ export const auditLogs = pgTable("audit_logs", {
   actionIdx: index("audit_logs_action_idx").on(table.action),
   resourceTypeIdx: index("audit_logs_resource_type_idx").on(table.resourceType),
   resourceIdIdx: index("audit_logs_resource_id_idx").on(table.resourceId),
-  timestampIdx: index("audit_logs_timestamp_idx").on(table.timestamp),
+  timestampIdx: index("audit_logs_timestamp_idx").on(table.createdAt),
   // Composite indexes for common queries
-  tenantTimestampIdx: index("audit_logs_tenant_timestamp_idx").on(table.tenantId, table.timestamp),
-  userTimestampIdx: index("audit_logs_user_timestamp_idx").on(table.userId, table.timestamp),
+  tenantTimestampIdx: index("audit_logs_tenant_timestamp_idx").on(table.tenantId, table.createdAt),
+  userTimestampIdx: index("audit_logs_user_timestamp_idx").on(table.userId, table.createdAt),
   resourceIdx: index("audit_logs_resource_idx").on(table.resourceType, table.resourceId),
   tenantActionIdx: index("audit_logs_tenant_action_idx").on(table.tenantId, table.action),
 }));

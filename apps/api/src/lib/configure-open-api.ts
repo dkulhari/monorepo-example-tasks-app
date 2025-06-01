@@ -1,4 +1,4 @@
-import { apiReference } from "@scalar/hono-api-reference";
+import { Scalar } from "@scalar/hono-api-reference";
 
 import type { AppOpenAPI } from "./types";
 
@@ -7,7 +7,7 @@ import { BASE_PATH } from "./constants";
 
 export default function configureOpenAPI(app: AppOpenAPI) {
   app.doc("/doc", {
-    openapi: "3.0.0",
+    openapi: "3.1.0",
     info: {
       version: packageJSON.version,
       title: "Multitenant IoT API",
@@ -17,15 +17,13 @@ export default function configureOpenAPI(app: AppOpenAPI) {
 
   app.get(
     "/reference",
-    apiReference({
+    Scalar({
+      url: `${BASE_PATH}/doc`,
       theme: "kepler",
       layout: "classic",
       defaultHttpClient: {
         targetKey: "js",
         clientKey: "fetch",
-      },
-      spec: {
-        url: `${BASE_PATH}/doc`,
       },
     }),
   );

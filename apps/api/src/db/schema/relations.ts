@@ -67,10 +67,6 @@ export const userSiteAssignmentsRelations = relations(userSiteAssignments, ({ on
     fields: [userSiteAssignments.siteId],
     references: [sites.id],
   }),
-  tenant: one(tenants, {
-    fields: [userSiteAssignments.tenantId],
-    references: [tenants.id],
-  }),
   assignedByUser: one(users, {
     fields: [userSiteAssignments.assignedBy],
     references: [users.id],

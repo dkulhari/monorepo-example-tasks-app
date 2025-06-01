@@ -29,10 +29,9 @@ export const userSiteAssignments = pgTable("user_site_assignments", {
   // Indexes for performance
   userIdIdx: index("user_site_user_id_idx").on(table.userId),
   siteIdIdx: index("user_site_site_id_idx").on(table.siteId),
-  tenantIdIdx: index("user_site_tenant_id_idx").on(table.tenantId),
   // Composite indexes for common queries
-  userTenantIdx: index("user_site_user_tenant_idx").on(table.userId, table.tenantId),
-  siteTenantIdx: index("user_site_site_tenant_idx").on(table.siteId, table.tenantId),
+  userSiteIdx: index("user_site_user_site_idx").on(table.userId, table.siteId),
+  roleIdx: index("user_site_role_idx").on(table.role),
 }));
 
 // Relations
@@ -44,10 +43,6 @@ export const userSiteAssignmentsRelations = relations(userSiteAssignments, ({ on
   site: one(sites, {
     fields: [userSiteAssignments.siteId],
     references: [sites.id],
-  }),
-  tenant: one(tenants, {
-    fields: [userSiteAssignments.tenantId],
-    references: [tenants.id],
   }),
   assignedByUser: one(users, {
     fields: [userSiteAssignments.assignedBy],
